@@ -166,7 +166,7 @@ sentinel/
 ├── README.md
 │
 ├── supabase/
-│   └── migrations/              # SQL (RLS, Realtime); e.g. initial schema
+│   └── migrations/              # 20260410120000_initial_schema.sql
 │
 ├── packages/
 │   └── sentinel-sdk/            # @sentinel/sdk — publishable-style package
