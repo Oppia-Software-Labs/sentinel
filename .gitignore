@@ -20,3 +20,4 @@ out
 # Supabase
 .branches
 .temp
+**/test_snapshots/*
