@@ -12,9 +12,9 @@
 
 ## Overview
 
-**Sentinel** is the governance layer. It answers whether a payment is allowed: multi-agent voting, spend rules (policy), Trustless Work escrow during evaluation, and a clear **approve** or **reject** outcome.
+**Sentinel** is the governance layer. It answers whether a payment is allowed: multi-agent voting, spend rules (policy), and a clear **approve** or **reject** outcome. **It does not move funds** or call Trustless Work.
 
-**ShieldPay** is the payments layer. After Sentinel approves, it proxies HTTP to the **hosted x402 facilitator** (OpenZeppelin + Stellar on `channels.openzeppelin.com`), forwards **verify** / **settle**, and coordinates MPP-style session logic for the MVP.
+**ShieldPay** is the payments layer. After Sentinel approves, it **funds escrow** (Trustless Work), proxies HTTP to the **hosted x402 facilitator** (OpenZeppelin + Stellar on `channels.openzeppelin.com`), forwards **verify** / **settle**, releases or refunds escrow as needed, and coordinates MPP-style session logic for the MVP.
 
 Together they form one stack; either piece can be discussed on its own for integrators.
 
@@ -26,8 +26,8 @@ Autonomous agents can burn API and on-chain budget in loops, retry storms, or ba
 
 | Area | Description |
 | --- | --- |
-| **@sentinel/sdk** | Shared types, policy engine, consensus coordinator, escrow (Trustless Work), agent registry |
-| **ShieldPay API** | Next.js API routes: proxy `/verify` · `/settle` to the hosted facilitator, MPP session hooks |
+| **@sentinel/sdk** | Shared types, policy engine, consensus coordinator, agent registry (**no escrow**) |
+| **ShieldPay API** | Trustless Work escrow (fund / release / refund), proxy `/verify` · `/settle` to the hosted facilitator, MPP session hooks |
 | **Dashboard** | Next.js UI, Supabase Realtime for transactions, votes, MPP sessions, policies, agents |
 | **Demo** | Paired scripts: unprotected spend loop vs Sentinel-protected agent |
 | **x402** | x402 v2, `exact` scheme, Stellar testnet/mainnet via hosted facilitator |
@@ -117,51 +117,110 @@ npm run loop -w demo        # unprotected loop (stub / wiring TBD)
 npm run protected -w demo   # Sentinel-aware agent (stub / wiring TBD)
 ```
 
-## Project structure
+## Repository architecture
 
-Monorepo: [Turborepo](https://turbo.build/repo) + **npm workspaces**.
+[Turborepo](https://turbo.build/repo) + **npm workspaces**. Clear **package boundaries**:
+
+| Layer | Location | Responsibility |
+| --- | --- | --- |
+| **Governance library** | `packages/sentinel-sdk` | Types, `verify` / `evaluate`, policy, consensus, Supabase reads/writes for governance data. **No** Trustless Work, **no** HTTP to the x402 facilitator. |
+| **Payments API** | `apps/shieldpay-api` | HTTP entry from agents. Calls `@sentinel/sdk`, then **escrow** (Trustless Work), **facilitator** (`/verify`, `/settle`), **MPP** routes, built-in voting agents. |
+| **Dashboard** | `apps/dashboard` | Next.js UI + Supabase Realtime (browser client only). |
+| **Demo** | `apps/demo` | CLI scripts; consumes types / SDK as needed. |
+
+**Dependency rule:** `apps/*` may depend on `packages/sentinel-sdk`. The SDK **must not** depend on `apps/*` or call Trustless Work / facilitator URLs (those stay in ShieldPay API).
+
+```
+                    ┌─────────────────────────────────────┐
+                    │       apps/shieldpay-api            │
+  Agents ──HTTP──►  │  proxy · escrow · facilitator · MPP │
+                    └──────────────┬──────────────────────┘
+                                   │ import
+                                   ▼
+                    ┌─────────────────────────────────────┐
+                    │     packages/sentinel-sdk           │
+                    │  types · policy · consensus · DB    │
+                    └──────────────┬──────────────────────┘
+                                   │
+          ┌────────────────────────┼────────────────────────┐
+          ▼                        ▼                        ▼
+   apps/dashboard            Supabase                  (no TW / x402
+   (Realtime UI)            (Postgres)                    in SDK)
+```
+
+## Directory layout
 
 ```
 sentinel/
-├── .env.example                 # Template for all env vars (copy into app .env.local)
-├── turbo.json                   # Turbo pipeline (build, dev)
-├── package.json                 # Root scripts + workspaces
-├── tsconfig.json                # Base TypeScript config
+├── package.json                 # workspaces, turbo scripts, packageManager
+├── turbo.json
+├── tsconfig.json
+├── package-lock.json
+├── .env.example                 # copy sections → apps/*/.env.local
+├── .gitignore
+│
+├── SENTINEL_CONTEXT.md          # full product + technical context (source of truth)
+├── MATIAS.md                    # ShieldPay API + monorepo owner tasks
+├── SANTIAGO.md                  # @sentinel/sdk + migrations
+├── FABIAN.md                    # dashboard + demo
+├── README.md
 │
 ├── supabase/
-│   └── migrations/              # SQL migrations (e.g. initial schema)
+│   └── migrations/              # SQL (RLS, Realtime); e.g. initial schema
 │
 ├── packages/
-│   └── sentinel-sdk/            # @sentinel/sdk
-│       ├── src/
-│       │   ├── types.ts         # Shared domain types (contract for all apps)
-│       │   ├── index.ts
-│       │   ├── consensus/       # Quorum, coordinator, registry (WIP)
-│       │   ├── policy/          # Policy engine (WIP)
-│       │   └── escrow/          # Trustless Work (WIP)
-│       └── package.json
+│   └── sentinel-sdk/            # @sentinel/sdk — publishable-style package
+│       ├── package.json
+│       ├── tsconfig.json
+│       └── src/
+│           ├── index.ts         # public exports
+│           ├── types.ts         # shared domain types (team contract)
+│           ├── consensus/       # coordinator, registry, quorum (Santiago)
+│           └── policy/          # engine.ts (Santiago)
 │
-├── apps/
-│   ├── shieldpay-api/           # Next.js 15 — API + proxy (port 4000)
-│   │   └── src/
-│   │       ├── app/
-│   │       │   ├── api/proxy/verify/route.ts
-│   │       │   └── api/proxy/settle/route.ts
-│   │       └── lib/
-│   │           ├── agents/      # Risk, Cost, Logic agents (WIP)
-│   │           ├── mpp/         # MPP session manager (WIP)
-│   │           └── supabase/    # Server Supabase client
-│   │
-│   ├── dashboard/               # Next.js 15 — UI (port 3000)
-│   │   └── src/
-│   │       ├── app/dashboard/
-│   │       ├── components/
-│   │       └── lib/supabase/    # Browser Supabase client
-│   │
-│   └── demo/                    # CLI demo agents (tsx)
-│       ├── loop-agent.ts
-│       └── protected-agent.ts                   # dashboard + demo
-└── README.md
+└── apps/
+    ├── shieldpay-api/           # Next.js 15, port 4000
+    │   ├── package.json
+    │   ├── next.config.ts
+    │   ├── tsconfig.json
+    │   └── src/
+    │       ├── app/
+    │       │   ├── layout.tsx
+    │       │   ├── page.tsx
+    │       │   └── api/
+    │       │       ├── proxy/
+    │       │       │   ├── verify/route.ts   # policy shortcut + forward /verify
+    │       │       │   └── settle/route.ts   # evaluate + escrow + /settle
+    │       │       └── mpp/route.ts          # MPP + kill-switch (WIP)
+    │       └── lib/
+    │           ├── escrow/
+    │           │   └── trustless-work.ts     # fund / release / refund
+    │           ├── agents/                   # risk, cost, logic (WIP)
+    │           ├── mpp/
+    │           │   └── session-manager.ts  # MPP lifecycle (WIP)
+    │           └── supabase/
+    │               └── server.ts             # service role client
+    │
+    ├── dashboard/               # Next.js 15, port 3000
+    │   ├── package.json
+    │   ├── next.config.ts
+    │   └── src/
+    │       ├── app/
+    │       │   ├── layout.tsx
+    │       │   ├── page.tsx
+    │       │   ├── globals.css
+    │       │   └── dashboard/
+    │       │       └── page.tsx
+    │       ├── components/
+    │       └── lib/
+    │           └── supabase/
+    │               └── client.ts             # anon + Realtime
+    │
+    └── demo/
+        ├── package.json
+        ├── tsconfig.json
+        ├── loop-agent.ts
+        └── protected-agent.ts
 ```
 
 ## Available scripts
@@ -202,7 +261,7 @@ sentinel/
 | Technology | Role |
 | --- | --- |
 | **Supabase** | Postgres + Realtime for transactions, votes, sessions, policies |
-| **Trustless Work** | Escrow API (fund / release / refund) during governance |
+| **Trustless Work** | Escrow API used **from ShieldPay API** after Sentinel approves (fund / release / refund) |
 | **@stellar/mpp** | MPP flows on Stellar (with compatible `@stellar/stellar-sdk` / `mppx` peers) |
 
 ### Payments (x402)
@@ -215,16 +274,19 @@ sentinel/
 
 Self-hosting a Relayer + plugin is optional; see [OpenZeppelin facilitator guide](https://docs.openzeppelin.com/relayer/1.4.x/guides/stellar-x402-facilitator-guide).
 
-## Architecture (high level)
+## Runtime flow (high level)
 
 ```
 Agent  →  HTTP  →  ShieldPay API (proxy)
                       ↓
-              Sentinel (@sentinel/sdk): policy + consensus + escrow
+              @sentinel/sdk: verify (policy) or evaluate (policy + consensus)
                       ↓
-              If approve → HTTPS to hosted x402 facilitator (/verify, /settle)
+              If reject → response to agent (no escrow)
+              If approve → ShieldPay: Trustless Work fund-escrow
                       ↓
-              Stellar settlement
+              HTTPS → hosted x402 facilitator (/verify or /settle as designed)
+                      ↓
+              Stellar settlement → ShieldPay: release or refund escrow
 ```
 
 ## Environment configuration
@@ -236,6 +298,15 @@ Required groups:
 
 1. **ShieldPay API** — facilitator base URL + API key, Trustless Work, Supabase service role, `STELLAR_NETWORK`, optional `SLACK_WEBHOOK_URL`.
 2. **Dashboard** — public Supabase URL and anon key only.
+
+## Documentation for contributors
+
+| Doc | Purpose |
+| --- | --- |
+| [SENTINEL_CONTEXT.md](./SENTINEL_CONTEXT.md) | Vision, architecture diagrams, Supabase schema, env, links |
+| [MATIAS.md](./MATIAS.md) | ShieldPay API, escrow module, facilitator, MPP |
+| [SANTIAGO.md](./SANTIAGO.md) | `@sentinel/sdk`, migrations, policy, consensus |
+| [FABIAN.md](./FABIAN.md) | Dashboard UI, demo scripts, judge-facing polish |
 
 ## Contributing
 
