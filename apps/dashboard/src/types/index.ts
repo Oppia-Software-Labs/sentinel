@@ -25,6 +25,17 @@ export interface Vote {
   created_at: string
 }
 
+export interface RegisteredAgent {
+  id: string
+  owner_id: string
+  agent_id: string
+  type: 'shieldpay' | 'custom'
+  endpoint: string | null
+  description: string | null
+  is_active: boolean
+  created_at: string
+}
+
 export interface MppSession {
   id: string
   session_id: string
