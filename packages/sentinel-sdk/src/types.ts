@@ -18,6 +18,7 @@ export interface EvaluationResult {
   votes: AgentVote[]
   policyDecision: 'approved' | 'rejected'
   escrowContractId?: string
+  sorobanTxId?: string
   reason?: string
 }
 
@@ -33,4 +34,18 @@ export interface ConsensusConfig {
   quorum: 'majority' | 'unanimous' | 'any'
   timeoutMs: number
   agents: string[]
+}
+
+export interface SorobanConfig {
+  rpcUrl: string
+  networkPassphrase: string
+  contractId: string
+  operatorSecret: string
+}
+
+export interface PolicyResult {
+  allowed: boolean
+  reason?: string
+  rule?: string
+  alerts?: Array<{ rule: string; message: string }>
 }
