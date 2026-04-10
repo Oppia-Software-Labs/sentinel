@@ -47,6 +47,7 @@ create table transactions (
   consensus_result text check (consensus_result in ('approved', 'rejected', 'timeout')),
   policy_decision text check (policy_decision in ('approved', 'rejected')),
   escrow_contract_id text,             -- Trustless Work contract id (set by ShieldPay)
+  soroban_tx_id text,                  -- Soroban transaction id (set by sentinel-sdk)
   tx_hash text,
   error text,
   created_at timestamptz default now()

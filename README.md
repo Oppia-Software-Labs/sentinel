@@ -69,11 +69,16 @@ Optional:
 
 4. **Configure environment variables**
 
-   Copy values from [`.env.example`](./.env.example) into:
+   Each app has its own `.env.example` — copy it to `.env.local` and fill in the values:
+
+   ```bash
+   cp apps/shieldpay-api/.env.example apps/shieldpay-api/.env.local
+   cp apps/dashboard/.env.example apps/dashboard/.env.local
+   ```
 
    | File | Purpose |
    | --- | --- |
-   | `apps/shieldpay-api/.env.local` | Facilitator URL + API key, Trustless Work, Supabase service role, Slack webhook |
+   | `apps/shieldpay-api/.env.local` | Facilitator URL + API key, Trustless Work, Supabase service role, Soroban contract |
    | `apps/dashboard/.env.local` | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` |
 
    **Hosted facilitator (testnet)** — set at minimum:
@@ -123,12 +128,13 @@ npm run protected -w demo   # Sentinel-aware agent (stub / wiring TBD)
 
 | Layer | Location | Responsibility |
 | --- | --- | --- |
-| **Governance library** | `packages/sentinel-sdk` | Types, `verify` / `evaluate`, policy, consensus, Supabase reads/writes for governance data. **No** Trustless Work, **no** HTTP to the x402 facilitator. |
+| **On-chain governance** | `contracts/sentinel-governance` | Soroban contract (Rust, `soroban-sdk`): policy, quorum, agent registry, verdicts. **Not** an npm workspace; build and deploy with the Soroban/Stellar toolchain. |
+| **Governance library** | `packages/sentinel-sdk` | Types, `verify` / `evaluate`, `SorobanClient`, policy, consensus, Supabase mirror. Invokes the contract over RPC. **No** Trustless Work, **no** HTTP to the x402 facilitator. |
 | **Payments API** | `apps/shieldpay-api` | HTTP entry from agents. Calls `@sentinel/sdk`, then **escrow** (Trustless Work), **facilitator** (`/verify`, `/settle`), **MPP** routes, built-in voting agents. |
 | **Dashboard** | `apps/dashboard` | Next.js UI + Supabase Realtime (browser client only). |
 | **Demo** | `apps/demo` | CLI scripts; consumes types / SDK as needed. |
 
-**Dependency rule:** `apps/*` may depend on `packages/sentinel-sdk`. The SDK **must not** depend on `apps/*` or call Trustless Work / facilitator URLs (those stay in ShieldPay API).
+**Dependency rule:** `apps/*` may depend on `packages/sentinel-sdk`. The SDK **must not** depend on `apps/*` or call Trustless Work / facilitator URLs (those stay in ShieldPay API). The contract crate under `contracts/` is independent of npm workspaces.
 
 ```
                     ┌─────────────────────────────────────┐
@@ -139,13 +145,20 @@ npm run protected -w demo   # Sentinel-aware agent (stub / wiring TBD)
                                    ▼
                     ┌─────────────────────────────────────┐
                     │     packages/sentinel-sdk           │
-                    │  types · policy · consensus · DB    │
+                    │  types · soroban · policy ·         │
+                    │  consensus · supabase mirror        │
                     └──────────────┬──────────────────────┘
-                                   │
-          ┌────────────────────────┼────────────────────────┐
-          ▼                        ▼                        ▼
-   apps/dashboard            Supabase                  (no TW / x402
-   (Realtime UI)            (Postgres)                    in SDK)
+                                   │ RPC / transactions
+                                   ▼
+                    ┌─────────────────────────────────────┐
+                    │ contracts/sentinel-governance        │
+                    │ Soroban wasm (testnet / deploy)      │
+                    └─────────────────────────────────────┘
+
+          ┌────────────────────────┬────────────────────────┐
+          ▼                        ▼
+   apps/dashboard            Supabase
+   (Realtime UI)            (Postgres mirror)
 ```
 
 ## Directory layout
@@ -168,15 +181,26 @@ sentinel/
 ├── supabase/
 │   └── migrations/              # 20260410120000_initial_schema.sql
 │
+├── contracts/
+│   └── sentinel-governance/     # Soroban smart contract (Rust cdylib)
+│       ├── Cargo.toml           # soroban-sdk 25.x
+│       └── src/
+│           ├── lib.rs           # contract entry
+│           ├── types.rs
+│           ├── errors.rs
+│           └── test.rs
+│
 ├── packages/
 │   └── sentinel-sdk/            # @sentinel/sdk — publishable-style package
 │       ├── package.json
 │       ├── tsconfig.json
 │       └── src/
-│           ├── index.ts         # public exports
-│           ├── types.ts         # shared domain types (team contract)
-│           ├── consensus/       # coordinator, registry, quorum (Santiago)
-│           └── policy/          # engine.ts (Santiago)
+│           ├── index.ts         # verify(), evaluate(), re-exports
+│           ├── types.ts         # shared domain types
+│           ├── soroban/         # SorobanClient, loadSorobanConfig
+│           ├── policy/          # evaluatePolicy (engine)
+│           ├── consensus/     # coordinator, registry, quorum
+│           └── supabase/        # mirror helpers
 │
 └── apps/
     ├── shieldpay-api/           # Next.js 15, port 4000
@@ -260,6 +284,7 @@ sentinel/
 
 | Technology | Role |
 | --- | --- |
+| **Soroban (`contracts/sentinel-governance`)** | On-chain policy, quorum, agent registry, verdicts; invoked by `@sentinel/sdk` over RPC |
 | **Supabase** | Postgres + Realtime for transactions, votes, sessions, policies |
 | **Trustless Work** | Escrow API used **from ShieldPay API** after Sentinel approves (fund / release / refund) |
 | **@stellar/mpp** | MPP flows on Stellar (with compatible `@stellar/stellar-sdk` / `mppx` peers) |
@@ -281,6 +306,8 @@ Agent  →  HTTP  →  ShieldPay API (proxy)
                       ↓
               @sentinel/sdk: verify (policy) or evaluate (policy + consensus)
                       ↓
+              Soroban contract (`contracts/sentinel-governance`) via RPC / txs
+                      ↓
               If reject → response to agent (no escrow)
               If approve → ShieldPay: Trustless Work fund-escrow
                       ↓
@@ -291,7 +318,8 @@ Agent  →  HTTP  →  ShieldPay API (proxy)
 
 ## Environment configuration
 
-- **Template:** [`.env.example`](./.env.example)
+- **API template:** [`apps/shieldpay-api/.env.example`](./apps/shieldpay-api/.env.example)
+- **Dashboard template:** [`apps/dashboard/.env.example`](./apps/dashboard/.env.example)
 - **Facilitator docs:** [Built on Stellar x402](https://developers.stellar.org/docs/build/agentic-payments/x402/built-on-stellar)
 
 Required groups:
