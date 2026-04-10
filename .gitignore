@@ -21,3 +21,4 @@ out
 .branches
 .temp
 **/test_snapshots/*
+**/target/*
