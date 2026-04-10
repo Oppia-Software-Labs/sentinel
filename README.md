@@ -169,17 +169,16 @@ sentinel/
 ├── turbo.json
 ├── tsconfig.json
 ├── package-lock.json
-├── .env.example                 # copy sections → apps/*/.env.local
 ├── .gitignore
-│
-├── SENTINEL_CONTEXT.md          # full product + technical context (source of truth)
-├── MATIAS.md                    # ShieldPay API + monorepo owner tasks
-├── SANTIAGO.md                  # @sentinel/sdk + migrations
-├── FABIAN.md                    # dashboard + demo
 ├── README.md
 │
 ├── supabase/
-│   └── migrations/              # 20260410120000_initial_schema.sql
+│   └── migrations/
+│       ├── 20260410120000_initial_schema.sql
+│       ├── 20260410130000_mpp_sessions_lifecycle_columns.sql
+│       ├── 20260410140000_transactions_add_soroban_tx_id.sql
+│       ├── 20260410150000_mpp_sessions_owner_id_to_text.sql
+│       └── 20260410160000_owner_id_to_text.sql
 │
 ├── contracts/
 │   └── sentinel-governance/     # Soroban smart contract (Rust cdylib)
@@ -199,50 +198,34 @@ sentinel/
 │           ├── types.ts         # shared domain types
 │           ├── soroban/         # SorobanClient, loadSorobanConfig
 │           ├── policy/          # evaluatePolicy (engine)
-│           ├── consensus/     # coordinator, registry, quorum
-│           └── supabase/        # mirror helpers
+│           ├── consensus/       # coordinator, registry, quorum
+│           └── supabase/        # mirrorTransaction, mirrorVotes, mirrorAgent, mirrorPolicy
 │
 └── apps/
     ├── shieldpay-api/           # Next.js 15, port 4000
-    │   ├── package.json
-    │   ├── next.config.ts
-    │   ├── tsconfig.json
+    │   ├── .env.example
+    │   ├── README.md            # API docs (endpoints, env vars)
     │   └── src/
     │       ├── app/
-    │       │   ├── layout.tsx
-    │       │   ├── page.tsx
+    │       │   ├── docs/page.tsx            # Swagger UI
     │       │   └── api/
-    │       │       ├── proxy/
-    │       │       │   ├── verify/route.ts   # policy shortcut + forward /verify
-    │       │       │   └── settle/route.ts   # evaluate + escrow + /settle
-    │       │       └── mpp/route.ts          # MPP + kill-switch (WIP)
+    │       │       ├── openapi/route.ts     # OpenAPI spec
+    │       │       ├── proxy/verify/route.ts
+    │       │       ├── proxy/settle/route.ts
+    │       │       ├── agents/route.ts      # register + list agents
+    │       │       ├── agents/risk/route.ts
+    │       │       ├── agents/cost/route.ts
+    │       │       ├── agents/logic/route.ts
+    │       │       └── mpp/route.ts
     │       └── lib/
-    │           ├── escrow/
-    │           │   └── trustless-work.ts     # fund / release / refund
-    │           ├── agents/                   # risk, cost, logic (WIP)
-    │           ├── mpp/
-    │           │   └── session-manager.ts  # MPP lifecycle (WIP)
-    │           └── supabase/
-    │               └── server.ts             # service role client
+    │           ├── escrow/trustless-work.ts # fund / release / refund
+    │           ├── mpp/session-manager.ts   # MPP lifecycle + Supabase mirror
+    │           └── supabase/server.ts       # service role client
     │
     ├── dashboard/               # Next.js 15, port 3000
-    │   ├── package.json
-    │   ├── next.config.ts
-    │   └── src/
-    │       ├── app/
-    │       │   ├── layout.tsx
-    │       │   ├── page.tsx
-    │       │   ├── globals.css
-    │       │   └── dashboard/
-    │       │       └── page.tsx
-    │       ├── components/
-    │       └── lib/
-    │           └── supabase/
-    │               └── client.ts             # anon + Realtime
+    │   └── .env.example
     │
     └── demo/
-        ├── package.json
-        ├── tsconfig.json
         ├── loop-agent.ts
         └── protected-agent.ts
 ```
@@ -331,10 +314,7 @@ Required groups:
 
 | Doc | Purpose |
 | --- | --- |
-| [SENTINEL_CONTEXT.md](./SENTINEL_CONTEXT.md) | Vision, architecture diagrams, Supabase schema, env, links |
-| [MATIAS.md](./MATIAS.md) | ShieldPay API, escrow module, facilitator, MPP |
-| [SANTIAGO.md](./SANTIAGO.md) | `@sentinel/sdk`, migrations, policy, consensus |
-| [FABIAN.md](./FABIAN.md) | Dashboard UI, demo scripts, judge-facing polish |
+| [apps/shieldpay-api/README.md](./apps/shieldpay-api/README.md) | ShieldPay API endpoint docs |
 
 ## Contributing
 
