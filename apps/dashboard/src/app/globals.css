@@ -1,8 +1,13 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* Tailwind v4: map color token names to CSS variables */
+/* Tailwind v4: map token names to CSS variables */
 @theme inline {
+  /* Fonts */
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, 'Courier New', monospace;
+
+
   --color-background:          var(--background);
   --color-foreground:          var(--foreground);
   --color-card:                var(--card);
@@ -70,6 +75,7 @@
   body {
     background-color: var(--background);
     color: var(--foreground);
+    font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
