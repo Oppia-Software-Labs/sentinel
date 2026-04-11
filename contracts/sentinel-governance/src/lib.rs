@@ -284,7 +284,7 @@ impl SentinelGovernance {
 
         // 6. Generate tx_id and store verdict
         let timestamp = env.ledger().timestamp();
-        let tx_id = Self::generate_tx_id(&env, &intent, timestamp);
+        let tx_id = Self::generate_tx_id(&env);
 
         let verdict = VerdictRecord {
             tx_id: tx_id.clone(),
@@ -461,26 +461,27 @@ impl SentinelGovernance {
             .extend_ttl(&key, TTL_THRESHOLD, TTL_EXTEND);
     }
 
-    fn generate_tx_id(env: &Env, intent: &IntentData, timestamp: u64) -> Symbol {
-        let mut seed = [0u8; 24];
-        let ts_bytes = timestamp.to_be_bytes();
-        let amt_bytes = (intent.amount as u64).to_be_bytes();
-        let vendor_payload = intent.vendor.to_val().get_payload().to_be_bytes();
-        seed[0..8].copy_from_slice(&ts_bytes);
-        seed[8..16].copy_from_slice(&amt_bytes);
-        seed[16..24].copy_from_slice(&vendor_payload);
-
-        let hash = env.crypto().sha256(&soroban_sdk::Bytes::from_array(env, &seed));
-        let arr = hash.to_array();
+    fn generate_tx_id(env: &Env) -> Symbol {
+        // Use a monotonic counter so the Verdict key is known at simulation time
+        // (timestamp-based IDs differ between simulation and execution, causing footprint violations)
+        let counter: u64 = env
+            .storage()
+            .persistent()
+            .get(&DataKey::VerdictCounter)
+            .unwrap_or(0u64);
+        let next = counter + 1;
+        env.storage()
+            .persistent()
+            .set(&DataKey::VerdictCounter, &next);
 
         let hex_chars = b"0123456789abcdef";
         let mut id_buf = [0u8; 16];
+        let bytes = next.to_be_bytes();
         for i in 0..8 {
-            id_buf[i * 2] = hex_chars[(arr[i] >> 4) as usize];
-            id_buf[i * 2 + 1] = hex_chars[(arr[i] & 0x0f) as usize];
+            id_buf[i * 2]     = hex_chars[(bytes[i] >> 4) as usize];
+            id_buf[i * 2 + 1] = hex_chars[(bytes[i] & 0x0f) as usize];
         }
-
-        let id_str = core::str::from_utf8(&id_buf).unwrap_or("0000000000000000");
+        let id_str = core::str::from_utf8(&id_buf).unwrap_or("0000000000000001");
         Symbol::new(env, id_str)
     }
 }
