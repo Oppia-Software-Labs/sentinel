@@ -10,6 +10,7 @@ pub enum DataKey {
     Agent(Address, Symbol),
     SpendTracker(Address),
     Verdict(Symbol),
+    VerdictCounter,
 }
 
 #[contracttype]

@@ -11,8 +11,16 @@ import type {
 const BASE_FEE = '1000000'
 const TX_TIMEOUT = 30
 
+// scValToNative converts ScvString to Buffer/Uint8Array, not a JS string
+function decodeScvString(val: unknown): string {
+  if (val instanceof Uint8Array) return new TextDecoder().decode(val)
+  if (Buffer.isBuffer(val)) return val.toString('utf8')
+  return String(val ?? '')
+}
+
 export interface VerdictResponse {
-  txId: string
+  txId: string          // Contract internal counter ID (e.g. "0000000000000008")
+  stellarTxHash: string // Real Stellar transaction hash (for stellar.expert)
   decision: 'approve' | 'reject'
   consensusResult: string
   policyDecision: string
@@ -102,8 +110,8 @@ export class SorobanClient {
       const op = this.contract.call(
         'verify_policy',
         new StellarSdk.Address(ownerAddress).toScVal(),
-        StellarSdk.nativeToScVal(amount, { type: 'i128' }),
-        StellarSdk.nativeToScVal(vendor, { type: 'symbol' }),
+        StellarSdk.nativeToScVal(BigInt(Math.round(amount * 10_000_000)), { type: 'i128' }),
+        StellarSdk.nativeToScVal(vendor.replace(/-/g, '_'), { type: 'symbol' }),
       )
       await this.simulateRead(op)
       return { allowed: true }
@@ -152,39 +160,38 @@ export class SorobanClient {
     intent: PaymentIntent,
     votes: AgentVote[],
   ): Promise<VerdictResponse> {
-    const intentScVal = StellarSdk.nativeToScVal(
-      {
-        agent_id: intent.agentId,
-        amount: BigInt(Math.round(intent.amount)),
-        asset_code: intent.assetCode,
-        vendor: intent.vendor,
-      },
-      {
-        type: {
-          agent_id: ['symbol'],
-          amount: ['i128'],
-          asset_code: ['symbol'],
-          vendor: ['symbol'],
-        } as any,
-      },
-    )
+    const xdr = StellarSdk.xdr
+    const makeSymbol = (s: string) => xdr.ScVal.scvSymbol(s)
+    const makeString = (s: string) => xdr.ScVal.scvString(s)
+    const makeI128 = (n: bigint) =>
+      xdr.ScVal.scvI128(
+        new xdr.Int128Parts({
+          hi: xdr.Int64.fromString(String(n >> 64n)),
+          lo: xdr.Uint64.fromString(String(BigInt.asUintN(64, n))),
+        }),
+      )
 
-    const votesScVal = StellarSdk.nativeToScVal(
-      votes.map(v => ({
-        agent_id: v.agentId,
-        decision: v.decision,
-        reason: v.reason,
-      })),
-      {
-        type: [
-          {
-            agent_id: ['symbol'],
-            decision: ['symbol'],
-            reason: ['string'],
-          },
-        ] as any,
-      },
+    const stroops = BigInt(Math.round(intent.amount * 10_000_000))
+    const vendor = intent.vendor.replace(/-/g, '_')
+    const agentId = intent.agentId.replace(/-/g, '_')
+
+    // Build IntentData ScVal as a sorted scvMap (Soroban requires alphabetical key order)
+    const intentScVal = xdr.ScVal.scvMap([
+      new xdr.ScMapEntry({ key: makeSymbol('agent_id'),   val: makeSymbol(agentId) }),
+      new xdr.ScMapEntry({ key: makeSymbol('amount'),     val: makeI128(stroops) }),
+      new xdr.ScMapEntry({ key: makeSymbol('asset_code'), val: makeSymbol(intent.assetCode) }),
+      new xdr.ScMapEntry({ key: makeSymbol('vendor'),     val: makeSymbol(vendor) }),
+    ])
+
+    // Build Vec<VoteData>
+    const voteEntries = votes.map(v =>
+      xdr.ScVal.scvMap([
+        new xdr.ScMapEntry({ key: makeSymbol('agent_id'), val: makeSymbol(v.agentId.replace(/-/g, '_')) }),
+        new xdr.ScMapEntry({ key: makeSymbol('decision'), val: makeSymbol(v.decision) }),
+        new xdr.ScMapEntry({ key: makeSymbol('reason'),   val: makeString(v.reason ?? '') }),
+      ]),
     )
+    const votesScVal = xdr.ScVal.scvVec(voteEntries)
 
     const op = this.contract.call(
       'evaluate',
@@ -278,22 +285,23 @@ export class SorobanClient {
       agentIds: string[]
     },
   ): Promise<void> {
+    const xdr = StellarSdk.xdr
     const quorumSymbol = config.quorum === 'unanimous' ? 'unanimou' : config.quorum
 
-    const configScVal = StellarSdk.nativeToScVal(
-      {
-        quorum: quorumSymbol,
-        timeout_ms: config.timeoutMs,
-        agent_ids: config.agentIds,
-      },
-      {
-        type: {
-          quorum: ['symbol'],
-          timeout_ms: ['u32'],
-          agent_ids: [['symbol']],
-        } as any,
-      },
-    )
+    const configScVal = xdr.ScVal.scvMap([
+      new xdr.ScMapEntry({
+        key: xdr.ScVal.scvSymbol('agent_ids'),
+        val: xdr.ScVal.scvVec(config.agentIds.map(id => xdr.ScVal.scvSymbol(id))),
+      }),
+      new xdr.ScMapEntry({
+        key: xdr.ScVal.scvSymbol('quorum'),
+        val: xdr.ScVal.scvSymbol(quorumSymbol),
+      }),
+      new xdr.ScMapEntry({
+        key: xdr.ScVal.scvSymbol('timeout_ms'),
+        val: xdr.ScVal.scvU32(config.timeoutMs),
+      }),
+    ])
 
     const op = this.contract.call(
       'set_consensus',
@@ -310,13 +318,18 @@ export class SorobanClient {
     const scVal = sim.result.retval
     const native = StellarSdk.scValToNative(scVal)
     if (!Array.isArray(native)) return []
-    return native.map((a: any) => ({
-      agentId: String(a.agent_id ?? a.agentId ?? ''),
-      type: String(a.agent_type ?? a.agentType ?? 'custom') as 'shieldpay' | 'custom',
-      endpoint: String(a.endpoint ?? ''),
-      description: String(a.description ?? ''),
-      isActive: Boolean(a.is_active ?? a.isActive ?? true),
-    }))
+    return native.map((a: any) => {
+      const endpoint = decodeScvString(a.endpoint)
+      // agent_id is the map key in the contract, not a struct field — infer from endpoint as fallback
+      const agentId = String(a.agent_id ?? a.agentId ?? endpoint.split('/').pop() ?? '')
+      return {
+        agentId,
+        type: String(a.agent_type ?? a.agentType ?? 'custom') as 'shieldpay' | 'custom',
+        endpoint,
+        description: decodeScvString(a.description),
+        isActive: Boolean(a.is_active ?? a.isActive ?? true),
+      }
+    })
   }
 
   private parseConsensusConfig(sim: StellarSdk.rpc.Api.SimulateTransactionSuccessResponse): ConsensusConfig {
@@ -348,12 +361,31 @@ export class SorobanClient {
 
   private parseVerdictResult(result: StellarSdk.rpc.Api.GetSuccessfulTransactionResponse): VerdictResponse {
     const retval = result.returnValue
+    const stellarTxHash = (result as any).txHash ?? (result as any).hash ?? ''
+
     if (!retval) {
       throw new Error('No return value from evaluate transaction')
     }
+
     const native = StellarSdk.scValToNative(retval) as any
+
+    // Contract may return just a symbol ('approve'/'reject') instead of a full struct
+    if (typeof native === 'string') {
+      return {
+        txId: stellarTxHash,
+        stellarTxHash,
+        decision: native === 'approve' ? 'approve' : 'reject',
+        consensusResult: native,
+        policyDecision: 'approve',
+        amount: 0,
+        vendor: '',
+        timestamp: Date.now(),
+      }
+    }
+
     return {
-      txId: String(native.tx_id ?? ''),
+      txId: String(native.tx_id ?? stellarTxHash),
+      stellarTxHash,
       decision: String(native.decision ?? 'reject') as 'approve' | 'reject',
       consensusResult: String(native.consensus_result ?? ''),
       policyDecision: String(native.policy_decision ?? ''),
