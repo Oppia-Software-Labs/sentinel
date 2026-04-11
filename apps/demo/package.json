@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "loop": "tsx loop-agent.ts",
-    "protected": "tsx protected-agent.ts"
+    "loop": "tsx --env-file .env loop-agent.ts",
+    "protected": "tsx --env-file .env protected-agent.ts"
   },
   "dependencies": {
     "@sentinel/sdk": "file:../../packages/sentinel-sdk"
