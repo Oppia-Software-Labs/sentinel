@@ -38,17 +38,14 @@ export async function POST(req: NextRequest) {
     })
   }
 
-  // Check 2: Velocity loop — the hourly spend is an exact multiple of the payment amount
-  // (only suspicious if totalSpentHour is >= 2x the amount, meaning it's happened before)
-  if (
-    context.totalSpentHour > 0 &&
-    intent.amount > 0 &&
-    context.totalSpentHour >= intent.amount * 2 &&
-    context.totalSpentHour % intent.amount === 0
-  ) {
+  // Check 2: Velocity loop — exact same amount repeated 5+ times in an hour is suspicious
+  const repeatCount = context.totalSpentHour > 0 && intent.amount > 0
+    ? Math.round(context.totalSpentHour / intent.amount)
+    : 0
+  if (repeatCount >= RETRY_STORM_THRESHOLD) {
     return NextResponse.json({
       decision: 'reject',
-      reason: `Velocity loop detected: payment amount (${intent.amount}) divides hourly spend (${context.totalSpentHour}) exactly, suggesting a repeat loop`,
+      reason: `Velocity loop detected: payment amount (${intent.amount}) has been repeated ~${repeatCount}x this hour, suggesting a runaway loop`,
     })
   }
 

@@ -18,7 +18,7 @@ function getTwConfig() {
   const networkPassphrase =
     process.env.STELLAR_NETWORK_PASSPHRASE ?? 'Test SDF Network ; September 2015'
   const usdcIssuer =
-    process.env.USDC_ISSUER_ADDRESS ?? 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC'
+    process.env.USDC_ISSUER_ADDRESS ?? 'GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5'
 
   if (!signerSecret) throw new Error('Missing TRUSTLESS_WORK_RELEASE_SIGNER')
 
@@ -59,18 +59,18 @@ export async function fundEscrow(amount: number, vendor: string): Promise<string
     engagementId: `shieldpay-${Date.now()}`,
     title: `ShieldPay → ${vendor}`,
     description: `AI agent payment escrow for vendor: ${vendor}`,
-    roles: [
-      { role: 'approver', address: signerAddress },
-      { role: 'serviceProvider', address: signerAddress },
-      { role: 'disputeResolver', address: signerAddress },
-      { role: 'receiver', address: signerAddress },
-      { role: 'platformAddress', address: signerAddress },
-      { role: 'depositor', address: signerAddress },
-    ],
+    roles: {
+      approver: signerAddress,
+      serviceProvider: signerAddress,
+      disputeResolver: signerAddress,
+      receiver: signerAddress,
+      platformAddress: signerAddress,
+      releaseSigner: signerAddress,
+    },
     amount,
     platformFee: 0,
     milestones: [{ description: `Payment to ${vendor}`, amount }],
-    trustline: [{ address: usdcIssuer, decimals: 10_000_000 }],
+    trustline: { address: usdcIssuer, symbol: 'USDC' },
   })
 
   const deployData = (await signAndSend(
