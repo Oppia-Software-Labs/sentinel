@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { PaymentIntent, EvaluationResult, SorobanConfig } from './types.js'
+import type { PaymentIntent, EvaluationResult, SorobanConfig, RegisteredAgent } from './types.js'
 import { createSorobanClient } from './soroban/client.js'
 import { evaluatePolicy } from './policy/engine.js'
 import { runConsensus } from './consensus/coordinator.js'
@@ -16,7 +16,7 @@ export async function verify(
 
 export async function evaluate(
   intent: PaymentIntent,
-  options: { ownerId: string; soroban: SorobanConfig; supabase?: SupabaseClient },
+  options: { ownerId: string; soroban: SorobanConfig; supabase?: SupabaseClient; fallbackAgentBaseUrl?: string },
 ): Promise<EvaluationResult> {
   const client = createSorobanClient(options.soroban)
 
@@ -44,12 +44,27 @@ export async function evaluate(
     }
   }
 
-  const consensusConfig = await client.getConsensus(options.ownerId)
+  // Try to get consensus config from Soroban; fall back to default ShieldPay agents
+  let consensusConfig: Awaited<ReturnType<typeof client.getConsensus>>
+  let fallbackAgents: RegisteredAgent[] | undefined
+  try {
+    consensusConfig = await client.getConsensus(options.ownerId)
+  } catch {
+    const base = options.fallbackAgentBaseUrl ?? 'http://localhost:4000'
+    consensusConfig = { quorum: 'majority', timeoutMs: 5000, agents: ['risk', 'cost', 'logic'] }
+    fallbackAgents = [
+      { agentId: 'risk',  type: 'shieldpay', endpoint: `${base}/api/agents/risk`,  isActive: true },
+      { agentId: 'cost',  type: 'shieldpay', endpoint: `${base}/api/agents/cost`,  isActive: true },
+      { agentId: 'logic', type: 'shieldpay', endpoint: `${base}/api/agents/logic`, isActive: true },
+    ]
+  }
+
   const consensusResult = await runConsensus(
     intent,
     consensusConfig,
     client,
     options.supabase,
+    fallbackAgents,
   )
 
   return {
@@ -57,6 +72,7 @@ export async function evaluate(
     votes: consensusResult.votes,
     policyDecision: 'approved',
     sorobanTxId: consensusResult.txId,
+    stellarTxHash: consensusResult.stellarTxHash,
   }
 }
 

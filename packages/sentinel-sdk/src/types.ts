@@ -18,7 +18,8 @@ export interface EvaluationResult {
   votes: AgentVote[]
   policyDecision: 'approved' | 'rejected'
   escrowContractId?: string
-  sorobanTxId?: string
+  sorobanTxId?: string      // Contract internal counter ID
+  stellarTxHash?: string    // Real Stellar transaction hash (for stellar.expert)
   reason?: string
 }
 
