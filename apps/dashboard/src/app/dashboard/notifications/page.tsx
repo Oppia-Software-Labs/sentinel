@@ -71,7 +71,7 @@ export default function NotificationsPage() {
         <div className="space-y-2">
           {channels.map(ch => {
             const Icon = ch.icon
-            const connected = ch.status === 'connected'
+            const connected = ch.status
 
             return (
               <div
