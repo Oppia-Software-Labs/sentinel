@@ -101,7 +101,7 @@ export async function mirrorAgent(
   ownerId: string,
   agent: {
     agentId: string
-    type: 'shieldpay' | 'custom'
+    type: 'shieldpay' | 'custom' | 'hosted'
     endpoint?: string
     description?: string
     isActive: boolean
