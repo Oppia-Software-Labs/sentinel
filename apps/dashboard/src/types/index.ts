@@ -31,11 +31,24 @@ export interface RegisteredAgent {
   id: string
   owner_id: string
   agent_id: string
-  type: 'shieldpay' | 'custom'
+  type: 'shieldpay' | 'custom' | 'hosted'
   endpoint: string | null
   description: string | null
   is_active: boolean
   created_at: string
+  provider?: string | null
+}
+
+export interface AgentConfig {
+  id: string
+  agent_id: string
+  owner_id: string
+  provider: 'openai' | 'anthropic'
+  model: string
+  system_prompt: string
+  temperature: number
+  created_at: string
+  updated_at: string
 }
 
 export interface MppSession {
