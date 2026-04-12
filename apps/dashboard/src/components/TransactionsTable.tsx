@@ -1,10 +1,11 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, CheckCircle2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { VotesPanel } from './VotesPanel'
+import { TxHashesPanel } from './TxHashesPanel'
 import type { Transaction } from '@/types'
 
 interface Props {
@@ -72,7 +73,7 @@ export function TransactionsTable({ initialTransactions }: Props) {
         <div>
           <h2 className="text-sm font-semibold">Transactions</h2>
           <p className="text-[11px] text-muted-foreground mt-0.5">
-            Click any row to inspect agent votes
+            Click any row to inspect votes and transaction hashes
           </p>
         </div>
         <span className="font-mono text-[11px] text-muted-foreground">
@@ -92,7 +93,7 @@ export function TransactionsTable({ initialTransactions }: Props) {
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-border">
-                {['', 'Time', 'Agent', 'Vendor', 'Amount', 'Consensus', 'Policy', 'Status'].map(
+                {['', 'Time', 'Agent', 'Vendor', 'Amount', 'Consensus', 'Policy', 'Status', 'Paid'].map(
                   (col, i) => (
                     <th
                       key={i}
@@ -188,13 +189,32 @@ export function TransactionsTable({ initialTransactions }: Props) {
                         {tx.status}
                       </span>
                     </td>
+
+                    {/* Paid */}
+                    <td className="px-4 py-3">
+                      {tx.status === 'settled' ? (
+                        <span className="inline-flex items-center gap-1 text-emerald-400">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          <span className="text-[10px] font-semibold uppercase tracking-wide">Paid</span>
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground/40">—</span>
+                      )}
+                    </td>
                   </tr>
 
-                  {/* Expanded votes panel */}
+                  {/* Expanded panel: TX hashes + agent votes */}
                   {expandedId === tx.id && (
                     <tr className="border-b border-border/40 bg-accent/10">
-                      <td colSpan={8} className="px-8 py-4">
-                        <VotesPanel transactionId={tx.id} />
+                      <td colSpan={9} className="px-8 py-4">
+                        <div className="flex flex-col gap-5 sm:flex-row sm:gap-10">
+                          <div className="sm:w-1/2">
+                            <TxHashesPanel transaction={tx} />
+                          </div>
+                          <div className="sm:w-1/2">
+                            <VotesPanel transactionId={tx.id} />
+                          </div>
+                        </div>
                       </td>
                     </tr>
                   )}

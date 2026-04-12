@@ -108,6 +108,7 @@ export async function runConsensus(
       consensusResult: verdict.consensusResult === 'approve' ? 'approved' : 'rejected',
       policyDecision: verdict.policyDecision === 'approve' ? 'approved' : 'rejected',
       sorobanTxId: verdict.txId,
+      stellarTxHash: verdict.stellarTxHash,
     }).catch(() => {})
 
     await mirrorVotes(supabase, verdict.txId, votes).catch(() => {})

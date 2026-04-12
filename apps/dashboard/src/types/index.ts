@@ -11,6 +11,8 @@ export interface Transaction {
   escrow_contract_id: string | null
   soroban_tx_id: string | null
   tx_hash: string | null
+  stellar_tx_hash: string | null
+  payment_tx_hash: string | null
   error: string | null
   created_at: string
 }

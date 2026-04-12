@@ -11,6 +11,7 @@ interface TransactionMirror {
   consensusResult: 'approved' | 'rejected' | 'timeout'
   policyDecision: 'approved' | 'rejected'
   sorobanTxId?: string
+  stellarTxHash?: string
 }
 
 export async function mirrorTransaction(
@@ -29,6 +30,7 @@ export async function mirrorTransaction(
       consensus_result: data.consensusResult,
       policy_decision: data.policyDecision,
       soroban_tx_id: data.sorobanTxId,
+      stellar_tx_hash: data.stellarTxHash,
     })
     .select('id')
     .single()
@@ -58,6 +60,27 @@ export async function mirrorVotes(
   }))
 
   await supabase.from('votes').insert(rows)
+}
+
+export async function updateTransactionHashes(
+  supabase: SupabaseClient,
+  sorobanTxId: string,
+  update: {
+    status?: 'approved' | 'rejected' | 'settled'
+    escrowContractId?: string
+    paymentTxHash?: string
+  },
+): Promise<void> {
+  const patch: Record<string, unknown> = {}
+  if (update.status !== undefined) patch.status = update.status
+  if (update.escrowContractId !== undefined) patch.escrow_contract_id = update.escrowContractId
+  if (update.paymentTxHash !== undefined) patch.payment_tx_hash = update.paymentTxHash
+  if (Object.keys(patch).length === 0) return
+
+  await supabase
+    .from('transactions')
+    .update(patch)
+    .eq('soroban_tx_id', sorobanTxId)
 }
 
 export async function mirrorPolicy(
