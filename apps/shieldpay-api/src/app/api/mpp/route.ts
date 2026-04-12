@@ -6,6 +6,8 @@ import {
   killSession,
   killAllSessions,
 } from '../../../lib/mpp/session-manager'
+import { createServiceRoleClient } from '../../../lib/supabase/server'
+import { dispatchNotifications } from '../../../lib/notifications/dispatch'
 
 type MppAction = 'open' | 'charge' | 'close' | 'kill' | 'kill_all'
 
@@ -56,11 +58,19 @@ export async function POST(req: NextRequest) {
         if (!sessionId)
           return NextResponse.json({ error: 'sessionId required' }, { status: 400 })
         await killSession(sessionId, reason ?? 'Manual kill')
+        try {
+          const supabase = createServiceRoleClient()
+          await dispatchNotifications(supabase, 'kill_switch_triggered', { sessionId, reason: reason ?? 'Manual kill' })
+        } catch { /* non-fatal */ }
         return NextResponse.json({ ok: true })
       }
 
       case 'kill_all': {
         await killAllSessions(ownerId)
+        try {
+          const supabase = createServiceRoleClient()
+          await dispatchNotifications(supabase, 'kill_switch_triggered', { sessionId: 'all', ownerId, reason: 'Kill-all triggered' })
+        } catch { /* non-fatal */ }
         return NextResponse.json({ ok: true })
       }
 

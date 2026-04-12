@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as StellarSdk from '@stellar/stellar-sdk'
-import { evaluate, loadSorobanConfig } from '@sentinel/sdk'
+import { evaluate, loadSorobanConfig, updateTransactionHashes } from '@sentinel/sdk'
 import type { PaymentIntent } from '@sentinel/sdk'
+import { dispatchNotifications } from '../../../../lib/notifications/dispatch'
 import { createServiceRoleClient } from '../../../../lib/supabase/server'
 import { fundEscrow, releaseEscrow } from '../../../../lib/escrow/trustless-work'
 import {
@@ -87,10 +88,24 @@ export async function POST(req: NextRequest) {
         escrowError = `Escrow release failed: ${err instanceof Error ? err.message : err}`
         console.warn(`[settle] ${escrowError}`)
       }
+      // Persist escrow contract id to the transaction row
+      if (supabase && result.sorobanTxId) {
+        await updateTransactionHashes(supabase, result.sorobanTxId, { escrowContractId: escrowId }).catch(() => {})
+      }
     }
 
     // 3. If governance rejected — return rejection with escrow record, skip payment
     if (result.decision === 'reject') {
+      if (supabase) {
+        await dispatchNotifications(supabase, 'transaction_blocked', {
+          vendor: intent.vendor,
+          amount: intent.amount,
+          sorobanTxId: result.sorobanTxId,
+          reason: result.reason,
+          escrowId,
+        }).catch(() => {})
+      }
+
       return NextResponse.json(
         {
           error: result.reason ?? 'Payment rejected by consensus',
@@ -113,6 +128,22 @@ export async function POST(req: NextRequest) {
         server,
         soroban.networkPassphrase,
       )
+
+      // Mark as settled and store payment hash
+      if (supabase && result.sorobanTxId) {
+        await updateTransactionHashes(supabase, result.sorobanTxId, {
+          status: 'settled',
+          paymentTxHash: x402Result.stellarTxHash,
+        }).catch(() => {})
+
+        await dispatchNotifications(supabase, 'transaction_settled', {
+          vendor: intent.vendor,
+          amount: intent.amount,
+          sorobanTxId: result.sorobanTxId,
+          escrowId,
+          paymentTxHash: x402Result.stellarTxHash,
+        }).catch(() => {})
+      }
 
       return NextResponse.json(
         {
@@ -148,6 +179,15 @@ export async function POST(req: NextRequest) {
 
   // ── Non-x402 path: reject without escrow ────────────────────────────────
   if (result.decision === 'reject') {
+    if (supabase) {
+      await dispatchNotifications(supabase, 'transaction_blocked', {
+        vendor: intent.vendor,
+        amount: intent.amount,
+        sorobanTxId: result.sorobanTxId,
+        reason: result.reason,
+      }).catch(() => {})
+    }
+
     return NextResponse.json(
       {
         error: result.reason ?? 'Payment rejected by consensus',
@@ -165,6 +205,20 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.warn(`[settle] Escrow funding skipped: ${msg}`)
+  }
+
+  if (supabase && result.sorobanTxId) {
+    await updateTransactionHashes(supabase, result.sorobanTxId, {
+      status: 'settled',
+      escrowContractId: escrowId,
+    }).catch(() => {})
+
+    await dispatchNotifications(supabase, 'transaction_settled', {
+      vendor: intent.vendor,
+      amount: intent.amount,
+      sorobanTxId: result.sorobanTxId,
+      escrowId,
+    }).catch(() => {})
   }
 
   return NextResponse.json(
