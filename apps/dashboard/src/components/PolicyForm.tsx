@@ -97,16 +97,16 @@ export function PolicyForm({ initialRules }: Props) {
   }
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-4">
-      <Card className="rounded-2xl border-border shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-sm font-semibold">Transaction Limits</CardTitle>
-          <CardDescription className="text-xs">
-            Hard stops — the on-chain policy engine rejects any payment that exceeds these.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div className="mx-auto flex max-w-5xl flex-col gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
+        <Card className="flex h-full flex-col rounded-2xl border-border shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-sm font-semibold">Transaction Limits</CardTitle>
+            <CardDescription className="text-xs">
+              Hard stops — the on-chain policy engine rejects any payment that exceeds these.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-1 flex-col gap-5 sm:gap-6">
             <NumberField
               id="max_per_task"
               label="Per Transaction"
@@ -128,19 +128,17 @@ export function PolicyForm({ initialRules }: Props) {
               value={maxPerDay}
               onChange={setMaxPerDay}
             />
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      <Card className="rounded-2xl border-border shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-sm font-semibold">Alert Threshold</CardTitle>
-          <CardDescription className="text-xs">
-            Fires a Slack alert without blocking — useful for detecting spend anomalies early.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="max-w-[180px]">
+        <Card className="flex h-full flex-col rounded-2xl border-border shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-sm font-semibold">Alert Threshold</CardTitle>
+            <CardDescription className="text-xs">
+              Fires a Slack alert without blocking — useful for detecting spend anomalies early.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-1 flex-col sm:max-w-xs">
             <NumberField
               id="alert_threshold"
               label="Threshold (USDC)"
@@ -148,9 +146,9 @@ export function PolicyForm({ initialRules }: Props) {
               value={alertThreshold}
               onChange={setAlertThreshold}
             />
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card className="rounded-2xl border-border shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <CardHeader className="pb-4">
