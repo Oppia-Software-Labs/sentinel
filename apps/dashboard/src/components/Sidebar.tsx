@@ -70,23 +70,6 @@ export function Sidebar() {
           )
         })}
       </nav>
-
-      {/* Connection card */}
-      <div className="p-4 pt-2">
-        <div className="rounded-2xl bg-emerald-50/90 p-5 shadow-[0_1px_0_rgba(6,78,59,0.06)] ring-1 ring-emerald-900/10 sm:p-6">
-          <p className="text-base font-semibold leading-snug text-emerald-950 sm:text-lg">
-            You&apos;re connected with:
-          </p>
-          <button
-            type="button"
-            className="mt-4 flex w-full items-center justify-between gap-3 rounded-full bg-emerald-950 px-5 py-4 text-left text-base font-medium text-emerald-50 transition-opacity hover:opacity-90"
-          >
-            <span className="mono truncate tracking-tight">{CONTRACT_SHORT}</span>
-            <ChevronRight className="h-5 w-5 shrink-0 opacity-80" />
-          </button>
-          <p className="mt-4 text-xs text-emerald-800/60 sm:text-sm">Stellar Testnet</p>
-        </div>
-      </div>
     </aside>
   )
 }
