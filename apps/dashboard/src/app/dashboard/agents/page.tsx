@@ -43,19 +43,6 @@ export default async function AgentsPage() {
         </div>
       </div>
 
-      {/* Page header */}
-      <div>
-        <h1 className="text-base font-semibold tracking-tight">Agents</h1>
-        <p className="text-xs text-muted-foreground mt-1">
-          Voting agents registered on-chain. Each receives a{' '}
-          <span className="font-mono">POST</span> with the payment intent and
-          responds <span className="font-mono">approve</span> /{' '}
-          <span className="font-mono">reject</span>. Quorum decides the verdict.
-        </p>
-      </div>
-
-      <div className="border-t border-border" />
-
       <AgentsList initialAgents={agents} />
     </div>
   )

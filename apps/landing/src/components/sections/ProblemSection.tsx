@@ -112,7 +112,7 @@ export default function ProblemSection() {
                     </div>
 
                     <div className="absolute -bottom-2 -right-2 z-10 w-44 rounded-2xl border border-white/20 bg-white/10 p-4 shadow-lg sm:right-0">
-                      <p className="text-2xl font-bold text-white">8,400×</p>
+                      <p className="text-2xl font-bold text-white">8,400x</p>
                       <p className="mt-0.5 text-xs font-semibold text-zinc-400">No kill-switch</p>
                       <p className="mt-2 text-xs leading-relaxed text-zinc-400">
                         Retries ran unchecked until manual stop

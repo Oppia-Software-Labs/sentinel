@@ -67,7 +67,7 @@ export default function ProblemSolution() {
       scrollTrigger: { trigger: stat1Ref.current, start: 'top 80%', once: true },
     })
 
-    // --- Stat counter roll-up: 8,400× ---
+    // --- Stat counter roll-up: 8,400x ---
     const c2 = { val: 0 }
     gsap.to(c2, {
       val: 8400,
@@ -75,7 +75,7 @@ export default function ProblemSolution() {
       ease: 'power2.out',
       onUpdate() {
         if (stat2Ref.current) {
-          stat2Ref.current.textContent = Math.round(c2.val).toLocaleString() + '×'
+          stat2Ref.current.textContent = Math.round(c2.val).toLocaleString() + 'x'
         }
       },
       scrollTrigger: { trigger: stat2Ref.current, start: 'top 80%', once: true },
@@ -94,7 +94,7 @@ export default function ProblemSolution() {
       })
     })
 
-    // --- Parallax: right container moves up at 0.3× scroll speed ---
+    // --- Parallax: right container moves up at 0.3x scroll speed ---
     gsap.to(rightContainerRef.current, {
       yPercent: -6,
       ease: 'none',
@@ -167,7 +167,7 @@ export default function ProblemSolution() {
                 className="font-extrabold leading-none tracking-tight"
                 style={{ fontSize: 'clamp(64px, 8vw, 96px)', color: '#0a0a0a' }}
               >
-                8,400×
+                8,400x
               </p>
               <p ref={label2Ref} className="mt-4 text-[15px] leading-snug text-gray-400">
                 {'retries ran unchecked, no kill-switch'.split('').map((ch, i) => (

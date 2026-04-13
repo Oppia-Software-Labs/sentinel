@@ -59,15 +59,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Page header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-base font-semibold tracking-tight">Overview</h1>
-          <div className="flex items-center gap-1.5">
-            <span className="live-dot" />
-            <span className="text-xs font-medium text-emerald-800">Live</span>
-          </div>
-        </div>
+      <div className="flex justify-end">
         <KillSwitchButton initialSessionCount={activeSessionCount} />
       </div>
 

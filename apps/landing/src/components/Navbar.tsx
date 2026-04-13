@@ -10,6 +10,7 @@ const NAV_LINKS = [
 
 export default function Navbar() {
   const [active, setActive] = useState<string>('#problem')
+  const launchUrl = process.env.NEXT_PUBLIC_LAUNCH_APP_URL ?? '/dashboard'
 
   useEffect(() => {
     const sections = NAV_LINKS.map((l) => l.href.slice(1))
@@ -47,7 +48,7 @@ export default function Navbar() {
         </nav>
 
         <a
-          href="#"
+          href={launchUrl}
           className="rounded-full bg-[#14532d] px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#166534]"
         >
           Launch App

@@ -1,11 +1,5 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { PolicyForm } from '@/components/PolicyForm'
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 
 export default async function PoliciesPage() {
   let rules: Record<string, unknown> | null = null
@@ -28,7 +22,7 @@ export default async function PoliciesPage() {
   }
 
   return (
-    <div className="space-y-4 p-6">
+    <div className="space-y-6 p-6">
       {/* Hero banner */}
       <div className="relative overflow-hidden rounded-2xl" style={{ height: '200px' }}>
         <div
@@ -47,16 +41,6 @@ export default async function PoliciesPage() {
           <p className="mt-1 text-sm text-white/70">Governance rules enforced on-chain by the Sentinel Soroban contract</p>
         </div>
       </div>
-
-      <Card className="rounded-2xl border-border shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-        <CardHeader>
-          <CardTitle className="text-base font-semibold tracking-tight">Policies</CardTitle>
-          <CardDescription className="text-xs leading-relaxed">
-            Governance rules enforced on-chain by the Sentinel Soroban contract. All values in USDC —
-            converted to stroops (×10⁷) on save.
-          </CardDescription>
-        </CardHeader>
-      </Card>
 
       <PolicyForm initialRules={rules} />
     </div>

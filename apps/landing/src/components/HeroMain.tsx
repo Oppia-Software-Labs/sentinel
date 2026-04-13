@@ -4,6 +4,8 @@ import { motion } from 'framer-motion'
 import { sectionRevealViewport, slideFromTop, staggerFromTop } from '@/components/motion/scrollEntrance'
 
 export default function HeroMain() {
+  const launchUrl = process.env.NEXT_PUBLIC_LAUNCH_APP_URL ?? '/dashboard'
+
   return (
     <main className="relative flex h-screen w-full flex-col overflow-hidden">
       <div className="absolute inset-0 z-0 bg-[url('/hero/hero.svg')] bg-cover bg-center brightness-93" />
@@ -31,7 +33,7 @@ export default function HeroMain() {
 
           <div className="mt-7">
             <a
-              href="#"
+              href={launchUrl}
               className="inline-block rounded-md bg-white px-6 py-3 text-sm font-medium text-zinc-950 transition-opacity hover:opacity-90"
             >
               Launch App
