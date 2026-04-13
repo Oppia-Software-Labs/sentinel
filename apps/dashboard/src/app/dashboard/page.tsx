@@ -37,13 +37,35 @@ export default async function DashboardPage() {
 
   return (
     <div className="p-6 space-y-5">
+      {/* Hero banner */}
+      <div className="relative overflow-hidden rounded-2xl" style={{ height: '200px' }}>
+        {/* Background image — filter applied here only, not to text */}
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: "url('/hero/hero.svg')",
+            filter: 'brightness(0.8)',
+          }}
+        />
+        {/* Gradient overlay */}
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.5) 0%, transparent 65%)', zIndex: 0 }} />
+        {/* Text content */}
+        <div className="relative z-10 flex h-full flex-col justify-center px-8">
+          <span className="mb-2 inline-flex w-fit items-center rounded-full border border-white/25 bg-white/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-white/80">
+            Sentinel
+          </span>
+          <h2 className="text-2xl font-bold tracking-tight text-white">Overview</h2>
+          <p className="mt-1 text-sm text-white/70">Real-time payment governance for autonomous AI agents</p>
+        </div>
+      </div>
+
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h1 className="text-base font-semibold tracking-tight">Overview</h1>
           <div className="flex items-center gap-1.5">
             <span className="live-dot" />
-            <span className="text-xs text-emerald-400 font-medium">Live</span>
+            <span className="text-xs font-medium text-emerald-800">Live</span>
           </div>
         </div>
         <KillSwitchButton initialSessionCount={activeSessionCount} />

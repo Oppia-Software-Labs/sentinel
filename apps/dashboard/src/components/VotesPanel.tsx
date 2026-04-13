@@ -72,7 +72,7 @@ export function VotesPanel({ transactionId }: Props) {
         {votes.map((vote) => (
           <div key={vote.id} className="flex items-start gap-2.5">
             {vote.decision === 'approve' ? (
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 mt-0.5 shrink-0" />
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-800 mt-0.5 shrink-0" />
             ) : (
               <XCircle className="h-3.5 w-3.5 text-red-400 mt-0.5 shrink-0" />
             )}
@@ -82,7 +82,7 @@ export function VotesPanel({ transactionId }: Props) {
                 <span
                   className={cn(
                     'text-[10px] uppercase font-semibold tracking-wide',
-                    vote.decision === 'approve' ? 'text-emerald-400' : 'text-red-400',
+                    vote.decision === 'approve' ? 'text-emerald-800' : 'text-red-600',
                   )}
                 >
                   {vote.decision}

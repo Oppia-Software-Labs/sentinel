@@ -2,32 +2,42 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Shield, Bot, Bell, ShieldCheck } from 'lucide-react'
+import {
+  LayoutDashboard,
+  Shield,
+  Bot,
+  Bell,
+  ShieldCheck,
+  ChevronRight,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const NAV = [
-  { href: '/dashboard',               label: 'Overview',      icon: LayoutDashboard },
-  { href: '/dashboard/policies',      label: 'Policies',      icon: Shield },
-  { href: '/dashboard/agents',        label: 'Agents',        icon: Bot },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard/policies', label: 'Policies', icon: Shield },
+  { href: '/dashboard/agents', label: 'Agents', icon: Bot },
   { href: '/dashboard/notifications', label: 'Notifications', icon: Bell },
 ]
+
+const CONTRACT_SHORT = 'CBPWF5…UGDVF'
 
 export function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="flex h-screen w-56 flex-col border-r border-border bg-card">
+    <aside className="flex h-screen w-70 shrink-0 flex-col border-r border-emerald-900/10 bg-background">
       {/* Brand */}
-      <div className="flex items-center gap-2.5 px-5 py-5 border-b border-border">
-        <ShieldCheck className="h-5 w-5 text-blue-400 shrink-0" />
-        <div>
-          <p className="text-sm font-semibold leading-none text-foreground">Sentinel</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5">ShieldPay Dashboard</p>
+      <div className="flex items-center gap-3.5 px-5 pb-6 pt-12">
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-950 text-emerald-50">
+          <ShieldCheck className="h-[22px] w-[22px] shrink-0" strokeWidth={2.25} />
         </div>
+        <span className="text-lg font-semibold tracking-tight text-emerald-950">
+          Sentinel
+        </span>
       </div>
 
       {/* Nav */}
-      <nav className="flex flex-col gap-0.5 p-3 flex-1">
+      <nav className="mt-4 flex flex-1 flex-col gap-1 px-3 pt-8">
         {NAV.map(({ href, label, icon: Icon }) => {
           const active = pathname === href
           return (
@@ -35,28 +45,40 @@ export function Sidebar() {
               key={href}
               href={href}
               className={cn(
-                'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
+                'flex items-center gap-3.5 rounded-full px-4 py-3.5 text-base transition-colors',
                 active
-                  ? 'bg-accent text-foreground font-medium'
-                  : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground',
+                  ? 'bg-emerald-950 font-semibold text-white shadow-sm'
+                  : 'text-zinc-700 hover:bg-zinc-100/90 hover:text-zinc-950',
               )}
             >
-              <Icon className="h-4 w-4 shrink-0" />
+              <Icon
+                className={cn(
+                  'h-5 w-5 shrink-0',
+                  active ? 'text-white' : 'text-zinc-500',
+                )}
+                strokeWidth={1.85}
+              />
               {label}
             </Link>
           )
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="px-4 py-3 border-t border-border">
-        <p className="text-[10px] text-muted-foreground">
-          Contract{' '}
-          <span className="mono text-blue-400/70">
-            CBPWF5…UGDVF
-          </span>
-        </p>
-        <p className="text-[10px] text-muted-foreground mt-0.5">Stellar Testnet</p>
+      {/* Connection card */}
+      <div className="p-4 pt-2">
+        <div className="rounded-2xl bg-emerald-50/90 p-5 shadow-[0_1px_0_rgba(6,78,59,0.06)] ring-1 ring-emerald-900/10 sm:p-6">
+          <p className="text-base font-semibold leading-snug text-emerald-950 sm:text-lg">
+            You&apos;re connected with:
+          </p>
+          <button
+            type="button"
+            className="mt-4 flex w-full items-center justify-between gap-3 rounded-full bg-emerald-950 px-5 py-4 text-left text-base font-medium text-emerald-50 transition-opacity hover:opacity-90"
+          >
+            <span className="mono truncate tracking-tight">{CONTRACT_SHORT}</span>
+            <ChevronRight className="h-5 w-5 shrink-0 opacity-80" />
+          </button>
+          <p className="mt-4 text-xs text-emerald-800/60 sm:text-sm">Stellar Testnet</p>
+        </div>
       </div>
     </aside>
   )

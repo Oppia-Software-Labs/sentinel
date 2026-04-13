@@ -24,14 +24,14 @@ function timeAgo(dateStr: string): string {
 }
 
 const STATUS_BADGE: Record<string, string> = {
-  settled:  'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
-  approved: 'bg-blue-500/15 text-blue-400 border-blue-500/25',
+  settled:  'bg-emerald-900/10 text-emerald-800 border-emerald-900/18',
+  approved: 'bg-emerald-900/10 text-emerald-800 border-emerald-900/18',
   rejected: 'bg-red-500/15 text-red-400 border-red-500/25',
   pending:  'bg-amber-500/15 text-amber-400 border-amber-500/25',
 }
 
 const DECISION_COLOR: Record<string, string> = {
-  approved: 'text-emerald-400',
+  approved: 'text-emerald-800',
   rejected: 'text-red-400',
   timeout:  'text-amber-400',
 }
@@ -67,9 +67,9 @@ export function TransactionsTable({ initialTransactions }: Props) {
   }
 
   return (
-    <div className="bg-card border border-border rounded-lg overflow-hidden">
+    <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
       {/* Card header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+      <div className="flex items-center justify-between px-4 py-[14px] border-b border-border">
         <div>
           <h2 className="text-sm font-semibold">Transactions</h2>
           <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -92,13 +92,13 @@ export function TransactionsTable({ initialTransactions }: Props) {
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-border">
+              <tr className="border-b border-[#eeece8] bg-[#faf9f7]">
                 {['', 'Time', 'Agent', 'Vendor', 'Amount', 'Consensus', 'Policy', 'Status', 'Paid'].map(
                   (col, i) => (
                     <th
                       key={i}
                       className={cn(
-                        'px-4 py-2.5 text-[10px] uppercase tracking-widest text-muted-foreground font-medium',
+                        'px-4 py-[14px] text-[11px] uppercase tracking-widest text-[#6b7280] font-medium',
                         col === 'Amount' ? 'text-right' : 'text-left',
                         col === '' && 'w-8',
                       )}
@@ -114,15 +114,15 @@ export function TransactionsTable({ initialTransactions }: Props) {
                 <React.Fragment key={tx.id}>
                   <tr
                     className={cn(
-                      'border-b border-border/40 cursor-pointer transition-colors',
-                      'hover:bg-accent/25',
-                      expandedId === tx.id && 'bg-accent/30',
+                      'border-b border-[#f3f1ed] cursor-pointer transition-colors',
+                      'hover:bg-accent',
+                      expandedId === tx.id && 'bg-accent/60',
                       newIds.has(tx.id) && 'row-new',
                     )}
                     onClick={() => toggle(tx.id)}
                   >
                     {/* Chevron */}
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-[14px]">
                       <ChevronRight
                         className={cn(
                           'h-3 w-3 text-muted-foreground/50 transition-transform duration-150',
@@ -132,22 +132,22 @@ export function TransactionsTable({ initialTransactions }: Props) {
                     </td>
 
                     {/* Time */}
-                    <td className="px-4 py-3 font-mono text-muted-foreground whitespace-nowrap">
+                    <td className="px-4 py-[14px] font-mono text-muted-foreground whitespace-nowrap">
                       {timeAgo(tx.created_at)}
                     </td>
 
                     {/* Agent */}
-                    <td className="px-4 py-3 font-mono text-foreground max-w-[140px] truncate">
+                    <td className="px-4 py-[14px] font-mono text-foreground max-w-[140px] truncate">
                       {tx.agent_id}
                     </td>
 
                     {/* Vendor */}
-                    <td className="px-4 py-3 text-muted-foreground">
+                    <td className="px-4 py-[14px] text-muted-foreground">
                       {tx.vendor ?? '—'}
                     </td>
 
                     {/* Amount */}
-                    <td className="px-4 py-3 text-right font-mono font-medium text-foreground whitespace-nowrap">
+                    <td className="px-4 py-[14px] text-right font-mono font-medium text-foreground whitespace-nowrap">
                       ${Number(tx.amount).toFixed(2)}
                       <span className="text-[10px] text-muted-foreground ml-1">
                         {tx.asset_code ?? 'USDC'}
@@ -155,7 +155,7 @@ export function TransactionsTable({ initialTransactions }: Props) {
                     </td>
 
                     {/* Consensus */}
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-[14px]">
                       <span
                         className={cn(
                           'text-[10px] font-semibold uppercase tracking-wide',
@@ -167,7 +167,7 @@ export function TransactionsTable({ initialTransactions }: Props) {
                     </td>
 
                     {/* Policy */}
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-[14px]">
                       <span
                         className={cn(
                           'text-[10px] font-semibold uppercase tracking-wide',
@@ -179,7 +179,7 @@ export function TransactionsTable({ initialTransactions }: Props) {
                     </td>
 
                     {/* Status badge */}
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-[14px]">
                       <span
                         className={cn(
                           'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide border',
@@ -191,9 +191,9 @@ export function TransactionsTable({ initialTransactions }: Props) {
                     </td>
 
                     {/* Paid */}
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-[14px]">
                       {tx.status === 'settled' ? (
-                        <span className="inline-flex items-center gap-1 text-emerald-400">
+                        <span className="inline-flex items-center gap-1 text-emerald-800">
                           <CheckCircle2 className="h-3.5 w-3.5" />
                           <span className="text-[10px] font-semibold uppercase tracking-wide">Paid</span>
                         </span>
@@ -205,7 +205,7 @@ export function TransactionsTable({ initialTransactions }: Props) {
 
                   {/* Expanded panel: TX hashes + agent votes */}
                   {expandedId === tx.id && (
-                    <tr className="border-b border-border/40 bg-accent/10">
+                    <tr className="border-b border-[#eeece8] bg-[#faf9f7]">
                       <td colSpan={9} className="px-8 py-4">
                         <div className="flex flex-col gap-5 sm:flex-row sm:gap-10">
                           <div className="sm:w-1/2">

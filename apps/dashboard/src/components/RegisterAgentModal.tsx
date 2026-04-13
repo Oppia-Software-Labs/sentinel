@@ -294,8 +294,19 @@ export function RegisterAgentModal() {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => { setMode(null); setTestResult(null) }}
-                  className="h-7 w-7 rounded-md flex items-center justify-center hover:bg-muted transition-colors"
+type="button"
+onClick={() => {
+  set('type', t);          
+  setMode(null);            
+  setTestResult(null);     
+}}
+className={`flex-1 py-1.5 rounded-md text-xs font-medium border transition-colors ${
+  form.type === t
+    ? t === 'shieldpay'
+      ? 'bg-emerald-900/12 text-emerald-900 border-emerald-900/25'
+      : 'bg-emerald-900/8 text-emerald-800 border-emerald-900/18'
+    : 'bg-transparent text-muted-foreground border-border hover:border-border/80'
+}`}
                 >
                   <ArrowLeft className="h-4 w-4 text-muted-foreground" />
                 </button>

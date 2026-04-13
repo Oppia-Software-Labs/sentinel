@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "animate.css";
 
 /* Tailwind v4: map token names to CSS variables */
 @theme inline {
@@ -34,38 +35,40 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* Dark theme by default — Sentinel is a security product */
+/* Light theme — off-white canvas, dark green accents */
 :root {
-  --background:             hsl(222 47% 5%);
-  --foreground:             hsl(213 31% 91%);
+  --background:             #f4f7f4;
+  --foreground:             hsl(158 42% 11%);
 
-  --card:                   hsl(222 47% 7%);
-  --card-foreground:        hsl(213 31% 91%);
+  --card:                   #ffffff;
+  --card-foreground:        hsl(158 42% 11%);
 
-  --popover:                hsl(222 47% 5%);
-  --popover-foreground:     hsl(213 31% 91%);
+  --popover:                #ffffff;
+  --popover-foreground:     hsl(158 42% 11%);
 
-  --primary:                hsl(210 40% 98%);
-  --primary-foreground:     hsl(222 47% 5%);
+  --primary:                hsl(152 36% 18%);
+  --primary-foreground:     hsl(138 76% 97%);
 
-  --secondary:              hsl(222 47% 11%);
-  --secondary-foreground:   hsl(210 40% 98%);
+  --secondary:              #ecf3ec;
+  --secondary-foreground:   hsl(158 42% 14%);
 
-  --muted:                  hsl(222 47% 11%);
-  --muted-foreground:       hsl(215 20% 55%);
+  --muted:                  #ecf3ec;
+  --muted-foreground:       hsl(158 14% 38%);
 
-  --accent:                 hsl(217 32% 17%);
-  --accent-foreground:      hsl(210 40% 98%);
+  --accent:                 #e3efe6;
+  --accent-foreground:      hsl(158 42% 14%);
 
   --destructive:            hsl(0 72% 51%);
   --destructive-foreground: hsl(210 40% 98%);
 
-  --border:                 hsl(217 32% 14%);
-  --input:                  hsl(217 32% 14%);
-  --ring:                   hsl(212 97% 60%);
+  --border:                 hsl(140 16% 88%);
+  --input:                  hsl(140 16% 88%);
+  --ring:                   hsl(152 36% 28%);
 
   --radius: 0.5rem;
 }
+
+
 
 @layer base {
   * {
@@ -90,7 +93,7 @@
     height: 0.5rem;
     width: 0.5rem;
     border-radius: 9999px;
-    background-color: #10b981;
+    background-color: #047857;
     animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
@@ -104,7 +107,7 @@
   }
 
   @keyframes row-flash {
-    0%   { background-color: hsl(212 97% 60% / 0.12); }
+    0%   { background-color: hsl(152 45% 40% / 0.14); }
     100% { background-color: transparent; }
   }
 }

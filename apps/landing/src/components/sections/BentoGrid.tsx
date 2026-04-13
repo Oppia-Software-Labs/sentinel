@@ -9,7 +9,12 @@ import {
   SlidersHorizontal,
   UsersRound,
 } from 'lucide-react'
-import { easeOutExpo, fadeUpItemShort, staggerContainer } from '@/components/motion/scrollEntrance'
+import {
+  sectionRevealViewport,
+  slideFromTop,
+  staggerContainer,
+  staggerFromTop,
+} from '@/components/motion/scrollEntrance'
 
 function BentoCard({
   icon: Icon,
@@ -27,13 +32,13 @@ function BentoCard({
   const base =
     'flex flex-col rounded-2xl border p-6 shadow-md transition-shadow duration-300 hover:shadow-lg md:p-7'
   const normal =
-    'border-zinc-200/90 bg-linear-to-br from-white to-zinc-50/80 backdrop-blur-sm'
+    'border-zinc-200/90 bg-linear-to-br from-white to-zinc-50/95'
   const hi =
     'border-[#166534]/25 bg-linear-to-br from-white via-[#f0fdf4]/90 to-[#dcfce7]/40 shadow-xl ring-1 ring-[#14532d]/15'
 
   return (
     <motion.div
-      variants={fadeUpItemShort}
+      variants={slideFromTop}
       className={`${base} ${highlighted ? hi : normal} ${className ?? ''} will-change-transform`}
     >
       <span
@@ -64,39 +69,40 @@ export default function BentoGrid() {
     <section id="features" className="scroll-mt-24 bg-white py-16 sm:py-20">
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
         <motion.div
-          initial={{ opacity: 0, y: 26 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.12, margin: '0px 0px -48px 0px' }}
-          transition={{ duration: 0.65, ease: easeOutExpo }}
-          className="mb-6 flex flex-col gap-4 will-change-transform sm:mb-7 sm:flex-row sm:items-end sm:justify-between sm:gap-6"
-        >
-          <div className="max-w-xl">
-            <span className="inline-block rounded-full border border-[#166534]/25 bg-[#14532d]/10 px-4 py-1.5 text-sm font-semibold uppercase tracking-widest text-[#166534]">
-              Platform
-            </span>
-            <h2 className="mt-3 text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl">
-              Everything you need to govern agent spend
-            </h2>
-          </div>
-          <p className="max-w-md text-base leading-relaxed text-zinc-500 sm:text-right md:text-lg">
-            Policy through execution — one stack for approvals, limits, monitoring, and audit-ready
-            trails.
-          </p>
-        </motion.div>
-
-        <motion.div
-          className="grid grid-cols-1 gap-3 md:grid-cols-3 md:grid-rows-3 md:gap-4"
+          className="flex flex-col"
+          variants={staggerFromTop}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, amount: 0.08, margin: '0px 0px -64px 0px' }}
-          variants={staggerContainer}
+          viewport={sectionRevealViewport}
         >
+          <motion.div
+            variants={slideFromTop}
+            className="mb-6 flex flex-col gap-4 will-change-transform sm:mb-7 sm:flex-row sm:items-end sm:justify-between sm:gap-6"
+          >
+            <div className="max-w-xl">
+              <span className="inline-block rounded-full border border-[#166534]/25 bg-[#14532d]/10 px-4 py-1.5 text-sm font-semibold uppercase tracking-widest text-[#166534]">
+                Platform
+              </span>
+              <h2 className="mt-3 text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl">
+                Everything you need to govern agent spend
+              </h2>
+            </div>
+            <p className="max-w-md text-base leading-relaxed text-zinc-500 sm:text-right md:text-lg">
+              Policy through execution: one stack for approvals, limits, monitoring, and audit-ready
+              trails.
+            </p>
+          </motion.div>
+
+          <motion.div
+            className="grid grid-cols-1 gap-3 md:grid-cols-3 md:grid-rows-3 md:gap-4"
+            variants={staggerContainer}
+          >
           <BentoCard
             className="md:col-span-2 md:row-span-2 md:row-start-1 md:col-start-1"
             highlighted
             icon={UsersRound}
             title="Multi-agent Approval"
-            description="Require M-of-N consensus before any intent becomes a payment. Quorums per tier, role, or spend band — enforced before ShieldPay sees a signature."
+            description="Require M-of-N consensus before any intent becomes a payment. Quorums per tier, role, or spend band, enforced before ShieldPay sees a signature."
           />
           <BentoCard
             className="md:col-start-3 md:row-start-1"
@@ -108,7 +114,7 @@ export default function BentoGrid() {
             className="md:col-start-3 md:row-start-2"
             icon={SlidersHorizontal}
             title="Spend Limits"
-            description="Per-call, session, and rolling windows — block overruns before they hit your ledger."
+            description="Per-call, session, and rolling windows block overruns before they hit your ledger."
           />
           <BentoCard
             className="md:col-start-1 md:row-start-3"
@@ -120,7 +126,7 @@ export default function BentoGrid() {
             className="md:col-start-2 md:row-start-3"
             icon={ScrollText}
             title="Audit Logs"
-            description="Immutable, queryable history for compliance — who approved what, when, and why."
+            description="Immutable, queryable history for compliance: who approved what, when, and why."
           />
           <BentoCard
             className="md:col-start-3 md:row-start-3"
@@ -128,6 +134,7 @@ export default function BentoGrid() {
             title="Fail-safe Execution"
             description="If governance fails closed, execution never starts. Escrow and routing only after a valid approval."
           />
+          </motion.div>
         </motion.div>
       </div>
     </section>

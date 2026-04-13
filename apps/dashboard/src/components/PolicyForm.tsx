@@ -4,9 +4,15 @@ import { useState, KeyboardEvent } from 'react'
 import { X, Plus, Save, Loader2, ShieldAlert } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { cn } from '@/lib/utils'
 
 // 1 USDC = 10_000_000 contract units
 const STROOPS_PER_USDC = 10_000_000
@@ -91,137 +97,136 @@ export function PolicyForm({ initialRules }: Props) {
   }
 
   return (
-    <div className="space-y-8 max-w-2xl">
+    <div className="mx-auto flex max-w-5xl flex-col gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
+        <Card className="flex h-full flex-col rounded-2xl border-border shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-sm font-semibold">Transaction Limits</CardTitle>
+            <CardDescription className="text-xs">
+              Hard stops — the on-chain policy engine rejects any payment that exceeds these.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-1 flex-col gap-5 sm:gap-6">
+            <NumberField
+              id="max_per_task"
+              label="Per Transaction"
+              hint="Max USDC per single payment"
+              value={maxPerTask}
+              onChange={setMaxPerTask}
+            />
+            <NumberField
+              id="max_per_hour"
+              label="Per Hour"
+              hint="Rolling 1-hour window"
+              value={maxPerHour}
+              onChange={setMaxPerHour}
+            />
+            <NumberField
+              id="max_per_day"
+              label="Per Day"
+              hint="Rolling 24-hour window"
+              value={maxPerDay}
+              onChange={setMaxPerDay}
+            />
+          </CardContent>
+        </Card>
 
-      {/* Transaction limits */}
-      <section>
-        <div className="mb-4">
-          <h2 className="text-sm font-semibold">Transaction Limits</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Hard stops — the on-chain policy engine rejects any payment that exceeds these.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <NumberField
-            id="max_per_task"
-            label="Per Transaction"
-            hint="Max USDC per single payment"
-            value={maxPerTask}
-            onChange={setMaxPerTask}
-          />
-          <NumberField
-            id="max_per_hour"
-            label="Per Hour"
-            hint="Rolling 1-hour window"
-            value={maxPerHour}
-            onChange={setMaxPerHour}
-          />
-          <NumberField
-            id="max_per_day"
-            label="Per Day"
-            hint="Rolling 24-hour window"
-            value={maxPerDay}
-            onChange={setMaxPerDay}
-          />
-        </div>
-      </section>
-
-      {/* Alert threshold */}
-      <section>
-        <div className="mb-4">
-          <h2 className="text-sm font-semibold">Alert Threshold</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Fires a Slack alert without blocking — useful for detecting spend anomalies early.
-          </p>
-        </div>
-        <div className="max-w-[180px]">
-          <NumberField
-            id="alert_threshold"
-            label="Threshold (USDC)"
-            hint="Alert at this amount"
-            value={alertThreshold}
-            onChange={setAlertThreshold}
-          />
-        </div>
-      </section>
-
-      {/* Blocked vendors */}
-      <section>
-        <div className="mb-4">
-          <h2 className="text-sm font-semibold">Vendor Blocklist</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Payments to these vendors are rejected regardless of amount or consensus result.
-          </p>
-        </div>
-
-        {/* Tag display + input */}
-        <div className="flex flex-wrap items-center gap-1.5 min-h-10 rounded-md border border-input bg-background px-3 py-2 focus-within:ring-2 focus-within:ring-ring">
-          {vendors.map((v) => (
-            <span
-              key={v}
-              className="inline-flex items-center gap-1 bg-red-500/15 text-red-400 border border-red-500/25 rounded px-2 py-0.5 text-[11px] font-mono font-medium"
-            >
-              {v}
-              <button
-                type="button"
-                onClick={() => removeVendor(v)}
-                className="hover:text-red-300 transition-colors ml-0.5"
-              >
-                <X className="h-2.5 w-2.5" />
-              </button>
-            </span>
-          ))}
-          <input
-            value={vendorInput}
-            onChange={(e) => setVendorInput(e.target.value)}
-            onKeyDown={onVendorKeyDown}
-            onBlur={addVendor}
-            placeholder={vendors.length === 0 ? 'Type a vendor name, press Enter…' : ''}
-            className="flex-1 min-w-[160px] bg-transparent text-sm placeholder:text-muted-foreground outline-none"
-          />
-        </div>
-        <p className="text-[11px] text-muted-foreground mt-1.5">
-          Press <kbd className="font-mono bg-muted px-1 py-0.5 rounded text-[10px]">Enter</kbd> or{' '}
-          <kbd className="font-mono bg-muted px-1 py-0.5 rounded text-[10px]">,</kbd> to add.
-          Click a tag to remove it.
-        </p>
-
-        {/* Quick-add suggestions */}
-        {vendors.length === 0 && (
-          <div className="mt-3 flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] text-muted-foreground uppercase tracking-widest">
-              Suggestions:
-            </span>
-            {['evil-vendor', 'blocked-api', 'untrusted'].map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setVendors((prev) => [...prev, s])}
-                className="inline-flex items-center gap-1 text-[11px] text-muted-foreground border border-dashed border-border rounded px-2 py-0.5 hover:border-border/80 hover:text-foreground transition-colors"
-              >
-                <Plus className="h-2.5 w-2.5" />
-                {s}
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Save */}
-      <div className="flex items-center gap-3 pt-2">
-        <Button onClick={handleSave} disabled={saving} size="sm" className="gap-1.5">
-          {saving ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Save className="h-3.5 w-3.5" />
-          )}
-          {saving ? 'Saving…' : 'Save policy'}
-        </Button>
-        <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-          <ShieldAlert className="h-3 w-3" />
-          Stored in Supabase mirror. Update the Soroban contract via the SDK or CLI.
-        </p>
+        <Card className="flex h-full flex-col rounded-2xl border-border shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-sm font-semibold">Alert Threshold</CardTitle>
+            <CardDescription className="text-xs">
+              Fires a Slack alert without blocking — useful for detecting spend anomalies early.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-1 flex-col sm:max-w-xs">
+            <NumberField
+              id="alert_threshold"
+              label="Threshold (USDC)"
+              hint="Alert at this amount"
+              value={alertThreshold}
+              onChange={setAlertThreshold}
+            />
+          </CardContent>
+        </Card>
       </div>
+
+      <Card className="rounded-2xl border-border shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-sm font-semibold">Vendor Blocklist</CardTitle>
+          <CardDescription className="text-xs">
+            Payments to these vendors are rejected regardless of amount or consensus result.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex min-h-10 flex-wrap items-center gap-1.5 rounded-md border border-input bg-background px-3 py-2 focus-within:ring-2 focus-within:ring-ring">
+            {vendors.map((v) => (
+              <span
+                key={v}
+                className="inline-flex items-center gap-1 rounded border border-red-600/25 bg-red-600/10 px-2 py-0.5 font-mono text-[11px] font-medium text-red-700 dark:text-red-400"
+              >
+                {v}
+                <button
+                  type="button"
+                  onClick={() => removeVendor(v)}
+                  className="ml-0.5 transition-colors hover:text-red-600 dark:hover:text-red-300"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              </span>
+            ))}
+            <input
+              value={vendorInput}
+              onChange={(e) => setVendorInput(e.target.value)}
+              onKeyDown={onVendorKeyDown}
+              onBlur={addVendor}
+              placeholder={vendors.length === 0 ? 'Type a vendor name, press Enter…' : ''}
+              className="min-w-[160px] flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            />
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Press <kbd className="rounded bg-muted px-1 py-0.5 font-mono text-[10px]">Enter</kbd> or{' '}
+            <kbd className="rounded bg-muted px-1 py-0.5 font-mono text-[10px]">,</kbd> to add. Click a tag to
+            remove it.
+          </p>
+          {vendors.length === 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                Suggestions:
+              </span>
+              {['blocked-vendor', 'evil-api', 'untrusted'].map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setVendors((prev) => [...prev, s])}
+                  className="inline-flex items-center gap-1 rounded border border-dashed border-border px-2 py-0.5 text-[11px] text-muted-foreground transition-colors hover:border-border/80 hover:text-foreground"
+                >
+                  <Plus className="h-2.5 w-2.5" />
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-2xl border-border shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <CardContent className="flex flex-col gap-3 pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <Button onClick={handleSave} disabled={saving} size="sm" className="gap-1.5 shrink-0">
+            {saving ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Save className="h-3.5 w-3.5" />
+            )}
+            {saving ? 'Saving…' : 'Save policy'}
+          </Button>
+          <p className="text-[11px] text-muted-foreground flex items-start gap-1.5 sm:max-w-md sm:text-right sm:justify-end">
+            <ShieldAlert className="mt-0.5 h-3 w-3 shrink-0" />
+            <span>
+              Stored in Supabase mirror. Update the Soroban contract via the SDK or CLI.
+            </span>
+          </p>
+        </CardContent>
+      </Card>
     </div>
   )
 }

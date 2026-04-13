@@ -12,6 +12,7 @@
     "build": "turbo build",
     "dev:api": "turbo dev --filter=shieldpay-api",
     "dev:dashboard": "turbo dev --filter=dashboard",
+    "dev:landing": "turbo dev --filter=landing",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "db:migrate": "supabase db push"
