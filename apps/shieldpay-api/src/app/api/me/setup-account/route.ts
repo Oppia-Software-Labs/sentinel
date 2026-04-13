@@ -2,10 +2,11 @@
  * POST /api/me/setup-account
  *
  * Called once per new user (from the dashboard profile route via service key).
- * Does three things:
+ * Does four things:
  *   1. Sends 100 USDC from the platform operator to the new user (Horizon)
  *   2. Registers the three default ShieldPay agents on Soroban for this owner
- *   3. Sets majority-quorum consensus config on Soroban for this owner
+ *   3. Seeds a default spending policy in Supabase
+ *   4. Sets majority-quorum consensus config on Soroban for this owner
  *
  * All steps are non-fatal individually — partial success is returned with an
  * `errors` array so the onboarding flow can continue.
@@ -13,7 +14,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import * as StellarSdk from '@stellar/stellar-sdk'
-import { registerAgent, loadSorobanConfig, createSorobanClient, mirrorAgent } from '@sentinel/sdk'
+import { registerAgent, loadSorobanConfig, createSorobanClient, mirrorAgent, mirrorPolicy } from '@sentinel/sdk'
 import { createServiceRoleClient } from '../../../../lib/supabase/server'
 import { validateApiKey, unauthorizedResponse } from '../../../../lib/auth/api-key'
 
@@ -109,6 +110,15 @@ export async function POST(req: NextRequest) {
         isActive:    true,
       }).catch(() => {})
     }
+
+    // Seed default policy (idempotent — upserts on owner_id)
+    await mirrorPolicy(supabase, ownerId, {
+      max_per_task:    50,
+      max_per_hour:    100,
+      max_per_day:     500,
+      blocked_vendors: [],
+      alert_threshold: 10,
+    }).catch(() => {})
 
     // Set consensus: majority quorum, all 3 agents, 5s timeout
     const { rpcUrl, networkPassphrase, contractId, operatorSecret } = soroban
