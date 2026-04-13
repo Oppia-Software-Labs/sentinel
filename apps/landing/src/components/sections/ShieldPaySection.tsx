@@ -57,7 +57,7 @@ export default function ShieldPaySection() {
           </p>
         </div>
 
-        <div className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 p-3 ring-1 ring-white/10 backdrop-blur-sm md:max-w-[54%] lg:max-w-[56%]">
+        <div className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 p-3 ring-1 ring-white/10 md:max-w-[54%] lg:max-w-[56%]">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-300">
               Execution pipeline
