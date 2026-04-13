@@ -6,7 +6,7 @@ import { sectionRevealViewport, slideFromTop, staggerFromTop } from '@/component
 import SentinelSection from '@/components/sections/SentinelSection'
 import ShieldPaySection from '@/components/sections/ShieldPaySection'
 
-/** Perlin smootherstep — ends are softer than plain smoothstep. */
+/** Perlin smootherstep: ends are softer than plain smoothstep. */
 function smootherstep01(t: number) {
   const x = Math.max(0, Math.min(1, t))
   return x * x * x * (x * (x * 6 - 15) + 10)
@@ -49,6 +49,10 @@ export default function GovernanceLayersScroll() {
   const sentinelVisibility = useTransform(sentinelOpacity, (o) => (o < 0.03 ? 'hidden' : 'visible'))
   const shieldVisibility = useTransform(shieldOpacity, (o) => (o < 0.03 ? 'hidden' : 'visible'))
 
+  // Subtle blur that peaks mid-crossfade; softens the card transition
+  const sentinelFilter = useTransform(sentinelOpacity, [1, 0.5, 0], ['blur(0px)', 'blur(3px)', 'blur(6px)'])
+  const shieldFilter = useTransform(shieldOpacity, [0, 0.5, 1], ['blur(6px)', 'blur(3px)', 'blur(0px)'])
+
   return (
     <section id="governance" className="scroll-mt-24 bg-white py-24 sm:py-32" aria-label="Sentinel and ShieldPay">
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
@@ -69,7 +73,7 @@ export default function GovernanceLayersScroll() {
           </motion.div>
           <motion.div variants={slideFromTop} className="max-w-md">
             <p className="text-base leading-relaxed text-zinc-500 sm:text-right md:text-lg">
-              Sentinel decides if a payment should happen. ShieldPay runs it when it&apos;s approved —
+              Sentinel decides if a payment should happen. ShieldPay runs it when it&apos;s approved:
               two layers, one flow from policy to settlement.
             </p>
           </motion.div>
@@ -99,6 +103,7 @@ export default function GovernanceLayersScroll() {
                         opacity: sentinelOpacity,
                         y: sentinelY,
                         visibility: sentinelVisibility,
+                        filter: sentinelFilter,
                       }}
                       className="absolute inset-0 z-1 overflow-x-hidden overflow-y-auto rounded-2xl"
                     >
@@ -110,6 +115,7 @@ export default function GovernanceLayersScroll() {
                         opacity: shieldOpacity,
                         y: shieldY,
                         visibility: shieldVisibility,
+                        filter: shieldFilter,
                       }}
                       className="absolute inset-0 z-2 overflow-x-hidden overflow-y-auto rounded-2xl"
                     >

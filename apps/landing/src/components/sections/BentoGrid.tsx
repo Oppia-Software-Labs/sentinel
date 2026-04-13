@@ -88,7 +88,7 @@ export default function BentoGrid() {
               </h2>
             </div>
             <p className="max-w-md text-base leading-relaxed text-zinc-500 sm:text-right md:text-lg">
-              Policy through execution — one stack for approvals, limits, monitoring, and audit-ready
+              Policy through execution: one stack for approvals, limits, monitoring, and audit-ready
               trails.
             </p>
           </motion.div>
@@ -102,7 +102,7 @@ export default function BentoGrid() {
             highlighted
             icon={UsersRound}
             title="Multi-agent Approval"
-            description="Require M-of-N consensus before any intent becomes a payment. Quorums per tier, role, or spend band — enforced before ShieldPay sees a signature."
+            description="Require M-of-N consensus before any intent becomes a payment. Quorums per tier, role, or spend band, enforced before ShieldPay sees a signature."
           />
           <BentoCard
             className="md:col-start-3 md:row-start-1"
@@ -114,7 +114,7 @@ export default function BentoGrid() {
             className="md:col-start-3 md:row-start-2"
             icon={SlidersHorizontal}
             title="Spend Limits"
-            description="Per-call, session, and rolling windows — block overruns before they hit your ledger."
+            description="Per-call, session, and rolling windows block overruns before they hit your ledger."
           />
           <BentoCard
             className="md:col-start-1 md:row-start-3"
@@ -126,7 +126,7 @@ export default function BentoGrid() {
             className="md:col-start-2 md:row-start-3"
             icon={ScrollText}
             title="Audit Logs"
-            description="Immutable, queryable history for compliance — who approved what, when, and why."
+            description="Immutable, queryable history for compliance: who approved what, when, and why."
           />
           <BentoCard
             className="md:col-start-3 md:row-start-3"

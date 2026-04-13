@@ -35,7 +35,7 @@ export default function SentinelSection() {
                 <span className="h-2 w-2 rounded-full bg-[#ef4444]/90" />
                 <span className="h-2 w-2 rounded-full bg-[#eab308]/90" />
                 <span className="h-2 w-2 rounded-full bg-[#166534]" />
-                <span className="ml-1.5 font-mono text-[10px] text-white/35">sentinel — zsh</span>
+                <span className="ml-1.5 font-mono text-[10px] text-white/35">sentinel · zsh</span>
               </div>
               <div className="space-y-1.5 px-3 py-3 font-mono text-[11px] leading-relaxed text-white/90 sm:text-xs">
                 <p className="text-[#15803d]">&gt; Evaluating transaction...</p>

@@ -8,17 +8,17 @@ const faqs = [
   {
     question: 'What is the difference between Sentinel and ShieldPay?',
     answer:
-      "Sentinel is the governance layer. It evaluates spend policies, coordinates multi-agent consensus votes, and issues approvals or rejections — without ever touching funds. ShieldPay is the payment execution layer. It receives Sentinel's signed approval and routes the payment through the x402 facilitator proxy, Trustless Work escrow, or an MPP session on Stellar.",
+      "Sentinel is the governance layer. It evaluates spend policies, coordinates multi-agent consensus votes, and issues approvals or rejections without ever touching funds. ShieldPay is the payment execution layer. It receives Sentinel's signed approval and routes the payment through the x402 facilitator proxy, Trustless Work escrow, or an MPP session on Stellar.",
   },
   {
     question: 'Does Sentinel move funds or interact with escrow directly?',
     answer:
-      'No. Sentinel only issues signed approvals or rejections. Funds move exclusively through ShieldPay, and only after Sentinel signs off. This separation ensures the governance layer cannot be shortcut at the payment layer — even by a compromised agent.',
+      'No. Sentinel only issues signed approvals or rejections. Funds move exclusively through ShieldPay, and only after Sentinel signs off. This separation ensures the governance layer cannot be shortcut at the payment layer, even by a compromised agent.',
   },
   {
     question: 'Which blockchains and payment protocols are supported?',
     answer:
-      'ShieldPay supports x402 (HTTP-native payments), Stellar via MPP (Micropayment Protocol), and Trustless Work escrow on EVM-compatible chains. Sentinel is chain-agnostic — it governs payment intent, not execution protocol.',
+      'ShieldPay supports x402 (HTTP-native payments), Stellar via MPP (Micropayment Protocol), and Trustless Work escrow on EVM-compatible chains. Sentinel is chain-agnostic: it governs payment intent, not execution protocol.',
   },
   {
     question: 'How does the multi-agent consensus voting work?',
@@ -63,7 +63,7 @@ export default function FaqSection() {
               </h2>
             </div>
             <p className="max-w-md text-base leading-relaxed text-zinc-500 sm:text-right md:text-lg">
-              Clear answers about how Sentinel and ShieldPay work together — and separately — for
+              Clear answers about how Sentinel and ShieldPay work together and separately for
               integrators and operators.
             </p>
           </motion.div>

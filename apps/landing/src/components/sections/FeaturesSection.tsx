@@ -30,7 +30,7 @@ const features = [
     ),
     title: 'Spend Policies',
     description:
-      'Cap per-call, per-session, and daily spend. Policies are evaluated at intent time — not post-settlement.',
+      'Cap per-call, per-session, and daily spend. Policies are evaluated at intent time, not post-settlement.',
   },
   {
     iconBg: 'bg-green-100',
@@ -42,7 +42,7 @@ const features = [
     ),
     title: 'Trustless Escrow',
     description:
-      'Funds are held in Trustless Work escrow and released only on confirmed outcome — not on agent promise.',
+      'Funds are held in Trustless Work escrow and released only on confirmed outcome, not on agent promise.',
   },
   {
     iconBg: 'bg-orange-100',
@@ -88,7 +88,7 @@ export default function FeaturesSection() {
   const cardRefs = useRef<(HTMLDivElement | null)[]>(new Array(features.length).fill(null))
 
   useGSAP(() => {
-    // Header row — stagger children (left div, right p)
+    // Header row: stagger children (left div, right p)
     if (headerRef.current) {
       gsap.from(Array.from(headerRef.current.children), {
         autoAlpha: 0,
@@ -100,7 +100,7 @@ export default function FeaturesSection() {
       })
     }
 
-    // Feature cards — batch entrance with stagger
+    // Feature cards: batch entrance with stagger
     const cards = cardRefs.current.filter(Boolean) as HTMLDivElement[]
     gsap.set(cards, { autoAlpha: 0, y: 40 })
 
@@ -124,7 +124,7 @@ export default function FeaturesSection() {
     <section ref={sectionRef} id="features" className="bg-white py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
 
-        {/* Header row — label + headline left, subtext right */}
+        {/* Header row: label + headline left, subtext right */}
         <div ref={headerRef} className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-xl">
             <span className="inline-block rounded-full bg-lime-100 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-lime-700">
@@ -135,8 +135,8 @@ export default function FeaturesSection() {
             </h2>
           </div>
           <p className="max-w-sm text-sm leading-relaxed text-gray-400 sm:text-right">
-            Sentinel and ShieldPay cover the full payment lifecycle — from intent to settlement —
-            so nothing moves without your approval.
+            Sentinel and ShieldPay cover the full payment lifecycle, from intent to settlement, so
+            nothing moves without your approval.
           </p>
         </div>
 

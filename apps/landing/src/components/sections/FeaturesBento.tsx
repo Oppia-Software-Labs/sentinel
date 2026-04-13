@@ -46,7 +46,7 @@ function VotingMockup() {
         </div>
       ))}
       <div className="mt-3 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-center font-mono text-[10px] font-semibold text-green-700">
-        3/3 quorum — payment authorized
+        3/3 quorum: payment authorized
       </div>
     </div>
   )
@@ -80,7 +80,7 @@ export default function FeaturesBento() {
     })
   }, { scope: containerRef })
 
-  // Magnetic hover — registered in useEffect, cleaned up manually
+  // Magnetic hover: registered in useEffect, cleaned up manually
   useEffect(() => {
     const cleanups: (() => void)[] = []
 
@@ -111,14 +111,14 @@ export default function FeaturesBento() {
     return () => cleanups.forEach((fn) => fn())
   }, [])
 
-  // Shared card class — border only, no shadow, no fill
+  // Shared card class: border only, no shadow, no fill
   const card = 'group relative flex flex-col rounded-[16px] border border-gray-200 bg-white'
 
   return (
     <section id="features" className="bg-white py-24 sm:py-32">
       <div ref={containerRef} className="mx-auto max-w-7xl px-6 lg:px-10">
 
-        {/* Section header — label left, subtext right */}
+        {/* Section header: label left, subtext right */}
         <div className="mb-12 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-lg">
             <span className="inline-block rounded-full bg-lime-100 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-lime-700">
@@ -133,13 +133,13 @@ export default function FeaturesBento() {
           </p>
         </div>
 
-        {/* Bento grid — asymmetric 3-column layout */}
+        {/* Bento grid: asymmetric 3-column layout */}
         <div
           className="grid grid-cols-3 gap-4"
           style={{ gridTemplateRows: '240px 240px 160px' }}
         >
 
-          {/* ① Large — Multi-agent Consensus (col-span-2, row-span-2) */}
+          {/* ① Large: Multi-agent Consensus (col-span-2, row-span-2) */}
           <div
             ref={(el) => { cardRefs.current[0] = el }}
             className={`${card} col-span-2 row-span-2 p-7`}
@@ -155,12 +155,12 @@ export default function FeaturesBento() {
             <h3 className="mt-4 text-xl font-bold text-gray-900">Multi-agent Consensus</h3>
             <p className="mt-2 text-sm leading-relaxed text-gray-500">
               Require M-of-N agent sign-off before any spend executes. Configure quorums per budget
-              tier or risk level — 2-of-3 for low-risk, 4-of-5 for large transfers.
+              tier or risk level (2-of-3 for low-risk, 4-of-5 for large transfers).
             </p>
             <VotingMockup />
           </div>
 
-          {/* ② Medium — Spend Policies */}
+          {/* ② Medium: Spend Policies */}
           <div
             ref={(el) => { cardRefs.current[1] = el }}
             className={`${card} p-6`}
@@ -175,11 +175,11 @@ export default function FeaturesBento() {
             </div>
             <h3 className="mt-4 text-base font-bold text-gray-900">Spend Policies</h3>
             <p className="mt-2 text-sm leading-relaxed text-gray-500">
-              Cap per-call, per-session, and daily spend. Policies evaluated at intent time — not post-settlement.
+              Cap per-call, per-session, and daily spend. Policies evaluated at intent time, not post-settlement.
             </p>
           </div>
 
-          {/* ③ Medium — Trustless Escrow */}
+          {/* ③ Medium: Trustless Escrow */}
           <div
             ref={(el) => { cardRefs.current[2] = el }}
             className={`${card} p-6`}
@@ -194,11 +194,11 @@ export default function FeaturesBento() {
             </div>
             <h3 className="mt-4 text-base font-bold text-gray-900">Trustless Escrow</h3>
             <p className="mt-2 text-sm leading-relaxed text-gray-500">
-              Funds held in Trustless Work escrow and released only on confirmed outcome — not on agent promise.
+              Funds held in Trustless Work escrow and released only on confirmed outcome, not on agent promise.
             </p>
           </div>
 
-          {/* ④ Small — x402 Facilitator */}
+          {/* ④ Small: x402 Facilitator */}
           <div
             ref={(el) => { cardRefs.current[3] = el }}
             className={`${card} p-5`}
@@ -217,7 +217,7 @@ export default function FeaturesBento() {
             </p>
           </div>
 
-          {/* ⑤ Small — Real-time Dashboard */}
+          {/* ⑤ Small: Real-time Dashboard */}
           <div
             ref={(el) => { cardRefs.current[4] = el }}
             className={`${card} p-5`}
@@ -236,7 +236,7 @@ export default function FeaturesBento() {
             </p>
           </div>
 
-          {/* ⑥ Small — Kill-switch & Alerts */}
+          {/* ⑥ Small: Kill-switch & Alerts */}
           <div
             ref={(el) => { cardRefs.current[5] = el }}
             className={`${card} p-5`}

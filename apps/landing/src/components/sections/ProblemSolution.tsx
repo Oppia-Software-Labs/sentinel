@@ -142,7 +142,7 @@ export default function ProblemSolution() {
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
         <div className="grid grid-cols-1 items-center gap-20 lg:grid-cols-2">
 
-          {/* Left — raw typographic stats, no cards */}
+          {/* Left: raw typographic stats, no cards */}
           <div className="flex flex-col gap-14">
             <div>
               <p
@@ -153,7 +153,7 @@ export default function ProblemSolution() {
                 $47,000
               </p>
               <p ref={label1Ref} className="mt-4 text-[15px] leading-snug text-gray-400">
-                {'lost in 72 hours — one misconfigured agent'.split('').map((ch, i) => (
+                {'lost in 72 hours, one misconfigured agent'.split('').map((ch, i) => (
                   <span key={i} className="inline-block">
                     {ch === ' ' ? '\u00a0' : ch}
                   </span>
@@ -179,7 +179,7 @@ export default function ProblemSolution() {
             </div>
           </div>
 
-          {/* Right — gray container: flow diagram + feature list */}
+          {/* Right: gray container (flow diagram + feature list) */}
           <div ref={rightContainerRef} className="flex flex-col gap-5">
             <div className="rounded-[20px] bg-[#F5F5F3] px-8 py-7">
               <p className="mb-5 font-mono text-[10px] font-semibold uppercase tracking-widest text-gray-400">
@@ -206,7 +206,7 @@ export default function ProblemSolution() {
                   </marker>
                 </defs>
 
-                {/* Node 1 — agent.run() */}
+                {/* Node 1: agent.run() */}
                 <g ref={svgNode1}>
                   <rect x="85" y="0" width="110" height="36" rx="6" fill="#1e293b" />
                   <text
@@ -232,7 +232,7 @@ export default function ProblemSolution() {
                   markerEnd="url(#ps-arrow)"
                 />
 
-                {/* Node 2 — sentinel.evaluate() */}
+                {/* Node 2: sentinel.evaluate() */}
                 <g ref={svgNode2}>
                   <rect x="30" y="70" width="220" height="36" rx="6" fill="#1e293b" />
                   <text
@@ -258,7 +258,7 @@ export default function ProblemSolution() {
                   markerEnd="url(#ps-arrow)"
                 />
 
-                {/* Node 3 — ✓ approved */}
+                {/* Node 3: ✓ approved */}
                 <g ref={svgNode3}>
                   <rect x="65" y="140" width="150" height="36" rx="6" fill="#052e16" />
                   <text
@@ -284,7 +284,7 @@ export default function ProblemSolution() {
                   markerEnd="url(#ps-arrow)"
                 />
 
-                {/* Node 4 — shieldpay.escrow() */}
+                {/* Node 4: shieldpay.escrow() */}
                 <g ref={svgNode4}>
                   <rect x="10" y="210" width="260" height="38" rx="8" fill="#1e293b" />
                   <text
@@ -302,7 +302,7 @@ export default function ProblemSolution() {
               </svg>
             </div>
 
-            {/* 3-col feature list — thin top-border dividers, no cards */}
+            {/* 3-col feature list: thin top-border dividers, no cards */}
             <div className="grid grid-cols-3">
               {features.map((f, i) => (
                 <div

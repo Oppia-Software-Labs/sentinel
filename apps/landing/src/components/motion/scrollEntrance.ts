@@ -28,7 +28,7 @@ export const fadeUpItemShort = {
   },
 }
 
-/** Stagger children that use `slideFromTop` — top-to-bottom reveal on scroll. */
+/** Stagger children that use `slideFromTop`: top-to-bottom reveal on scroll. */
 export const staggerFromTop = {
   hidden: {},
   show: {
@@ -39,7 +39,7 @@ export const staggerFromTop = {
   },
 }
 
-/** Enter from above (negative Y) — “drops” into place when in view. */
+/** Enter from above (negative Y): “drops” into place when in view. */
 export const slideFromTop = {
   hidden: { opacity: 0, y: -48 },
   show: {

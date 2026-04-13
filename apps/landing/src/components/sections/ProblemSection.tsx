@@ -37,7 +37,7 @@ export default function ProblemSection() {
               </h2>
             </div>
             <p className="max-w-sm text-sm leading-relaxed text-zinc-500 sm:max-w-xs sm:text-right sm:text-base">
-              Retries and duplicate calls drain funds before you notice — no kill-switch on the payment
+              Retries and duplicate calls drain funds before you notice, with no kill-switch on the payment
               layer.
             </p>
           </motion.div>
@@ -60,7 +60,7 @@ export default function ProblemSection() {
                   <motion.div variants={slideFromTop} className="will-change-transform">
                     <p className="text-base leading-relaxed text-zinc-300">
                       Without spend controls, agents hit retry loops and on-chain calls thousands of times
-                      before a human sees it — one misconfiguration cost a team $47k in 72 hours.
+                      before a human sees it. One misconfiguration cost a team $47k in 72 hours.
                     </p>
 
                     <p className="mt-3 text-base leading-relaxed text-zinc-300">
@@ -88,7 +88,7 @@ export default function ProblemSection() {
                         <div className="text-[#86c49a]">{'> agent.run("purchase_flow")'}</div>
                         <div className="text-white/45">Attempt 1 ... failed. Retrying.</div>
                         <div className="text-white/45">Attempt 2 ... failed. Retrying.</div>
-                        <div className="text-[#fca5a5]">ERROR: timeout — retrying indefinitely</div>
+                        <div className="text-[#fca5a5]">ERROR: timeout, retrying indefinitely</div>
                         <div className="text-white/40">Attempt 847 ... failed.</div>
                         <div className="text-white/40">Attempt 1,203 ... failed.</div>
                         <div className="text-[#fde047]/90">WARN: spend threshold approaching</div>
