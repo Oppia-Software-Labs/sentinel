@@ -149,15 +149,15 @@ function ChannelCard({ type, existing, onSaved }: ChannelCardProps) {
   }
 
   return (
-    <div className="bg-card border border-border rounded-lg overflow-hidden">
+    <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-border">
         <div className="flex items-center gap-3">
           <div className={cn(
             'h-8 w-8 rounded-md flex items-center justify-center shrink-0',
-            isConfigured ? 'bg-emerald-500/10' : 'bg-muted/40',
+            isConfigured ? 'bg-emerald-900/10' : 'bg-muted/40',
           )}>
-            <Icon className={cn('h-4 w-4', isConfigured ? 'text-emerald-400' : 'text-muted-foreground/50')} />
+            <Icon className={cn('h-4 w-4', isConfigured ? 'text-emerald-800' : 'text-muted-foreground/50')} />
           </div>
           <div>
             <p className="text-sm font-semibold leading-none">
@@ -173,7 +173,7 @@ function ChannelCard({ type, existing, onSaved }: ChannelCardProps) {
         <div className={cn(
           'shrink-0 inline-flex items-center gap-1.5 px-2 py-1 rounded-full border text-[10px] font-semibold uppercase tracking-wide',
           isConfigured
-            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+            ? 'bg-emerald-900/10 text-emerald-800 border-emerald-900/18'
             : 'bg-muted/20 text-muted-foreground/50 border-border',
         )}>
           {isConfigured
@@ -257,7 +257,7 @@ function ChannelCard({ type, existing, onSaved }: ChannelCardProps) {
                   className={cn(
                     'px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wide border transition-all',
                     active
-                      ? 'bg-blue-500/15 text-blue-400 border-blue-500/30 hover:bg-blue-500/20'
+                      ? 'bg-emerald-900/12 text-emerald-800 border-emerald-900/22 hover:bg-emerald-900/16'
                       : 'bg-muted/20 text-muted-foreground/50 border-transparent hover:border-border hover:text-muted-foreground',
                   )}
                 >
@@ -360,7 +360,7 @@ function DeliveryLog({ configs }: { configs: NotifConfig[] }) {
   }
 
   return (
-    <div className="rounded-lg border border-border overflow-hidden">
+    <div className="rounded-2xl border border-border overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
       {logs.map((log, i) => {
         const channelType = configTypeMap[log.config_id]
         return (
@@ -372,7 +372,7 @@ function DeliveryLog({ configs }: { configs: NotifConfig[] }) {
             )}
           >
             {log.status === 'sent' ? (
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-800 shrink-0" />
             ) : (
               <XCircle className="h-3.5 w-3.5 text-red-400 shrink-0" />
             )}
@@ -430,7 +430,27 @@ export default function NotificationsPage() {
   const emailConfig = configs.find((c) => c.type === 'email')
 
   return (
-    <div className="p-6 max-w-2xl space-y-6">
+    <div className="p-6 space-y-6">
+      {/* Hero banner */}
+      <div className="relative overflow-hidden rounded-2xl" style={{ height: '200px' }}>
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: "url('/hero/hero.svg')",
+            filter: 'brightness(0.8)',
+          }}
+        />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.5) 0%, transparent 65%)', zIndex: 0 }} />
+        <div className="relative z-10 flex h-full flex-col justify-center px-8">
+          <span className="mb-2 inline-flex w-fit items-center rounded-full border border-white/25 bg-white/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-white/80">
+            Sentinel
+          </span>
+          <h2 className="text-2xl font-bold tracking-tight text-white">Notifications</h2>
+          <p className="mt-1 text-sm text-white/70">Alert channels for governance events — blocked payments, settlements, and kill-switches</p>
+        </div>
+      </div>
+
+      <div className="max-w-6xl space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-base font-semibold tracking-tight">Notifications</h1>
@@ -453,7 +473,7 @@ export default function NotificationsPage() {
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
               Channels
             </p>
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:items-start md:gap-5">
               <ChannelCard type="webhook" existing={webhookConfig} onSaved={load} />
               <ChannelCard type="email" existing={emailConfig} onSaved={load} />
             </div>
@@ -469,13 +489,14 @@ export default function NotificationsPage() {
               </p>
               <span className="flex items-center gap-1.5">
                 <span className="live-dot" />
-                <span className="text-[10px] text-emerald-400 font-medium">Live</span>
+                <span className="text-[10px] font-medium text-emerald-800">Live</span>
               </span>
             </div>
             <DeliveryLog configs={configs} />
           </div>
         </>
       )}
+      </div>
     </div>
   )
 }
