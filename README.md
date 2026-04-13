@@ -399,6 +399,7 @@ Required groups:
 | Doc | Purpose |
 | --- | --- |
 | [apps/shieldpay-api/README.md](./apps/shieldpay-api/README.md) | ShieldPay API endpoint docs |
+| [apps/shieldpay-mcp/README.md](./apps/shieldpay-mcp/README.md) | MCP server setup and tool reference |
 
 ## Contributing
 
