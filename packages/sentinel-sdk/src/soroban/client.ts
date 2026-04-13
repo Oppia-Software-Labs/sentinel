@@ -36,6 +36,11 @@ export interface SpendTrackerResponse {
   dayStart: number
 }
 
+/**
+ * On-chain writes use `*_rel` contract methods: they require auth from the **contract admin**
+ * (the address passed to `__constructor` at deploy). That must be the same account as
+ * `SENTINEL_OPERATOR_SECRET` so the operator can relay policy/agents/consensus/evaluate for any owner.
+ */
 export class SorobanClient {
   private server: StellarSdk.rpc.Server
   private contract: StellarSdk.Contract
@@ -97,10 +102,93 @@ export class SorobanClient {
     }
 
     if (getResult.status === StellarSdk.rpc.Api.GetTransactionStatus.FAILED) {
-      throw new Error(`Transaction failed on-chain`)
+      const detail = (getResult as any).resultXdr?.toXDR?.('base64') ?? JSON.stringify(getResult)
+      const diag = this.gatherFailedInvokeDiagnostics(getResult as unknown as Record<string, unknown>)
+      const msg = diag ? `${detail} | ${diag}` : detail
+      throw new Error(`Transaction failed on-chain: ${msg}`)
     }
 
     return getResult as StellarSdk.rpc.Api.GetSuccessfulTransactionResponse
+  }
+
+  /** Decode diagnostic events from getTransaction + transaction meta (v3/v4 Soroban meta). */
+  private gatherFailedInvokeDiagnostics(getResult: Record<string, unknown>): string {
+    const chunks: string[] = []
+    const top = getResult.diagnosticEventsXdr as StellarSdk.xdr.DiagnosticEvent[] | undefined
+    const fromTop = this.formatDiagnosticEventList(top)
+    if (fromTop) chunks.push(fromTop)
+
+    const meta = getResult.resultMetaXdr as StellarSdk.xdr.TransactionMeta | undefined
+    if (!meta) return chunks.join(' | ')
+
+    try {
+      const sw = meta.switch()
+      if (sw === 3) {
+        const sm = meta.v3().sorobanMeta()
+        if (sm) {
+          const de = sm.diagnosticEvents() ?? []
+          const s = this.formatDiagnosticEventList(de)
+          if (s) chunks.push(s)
+          const rv = sm.returnValue()
+          if (rv) {
+            try {
+              chunks.push(`returnValue: ${String(StellarSdk.scValToNative(rv))}`)
+            } catch {
+              /* skip */
+            }
+          }
+        }
+      } else if (sw === 4) {
+        const v4 = meta.v4()
+        const de = v4.diagnosticEvents() ?? []
+        const s = this.formatDiagnosticEventList(de)
+        if (s) chunks.push(s)
+        const sm = v4.sorobanMeta()
+        if (sm) {
+          const rv = sm.returnValue()
+          if (rv) {
+            try {
+              chunks.push(`returnValue: ${String(StellarSdk.scValToNative(rv))}`)
+            } catch {
+              /* skip */
+            }
+          }
+        }
+      }
+    } catch {
+      /* skip */
+    }
+
+    return chunks.filter(Boolean).join(' | ')
+  }
+
+  private formatDiagnosticEventList(events: StellarSdk.xdr.DiagnosticEvent[] | undefined): string {
+    if (!events?.length) return ''
+    const parts: string[] = []
+    for (const evt of events) {
+      try {
+        const ce = evt.event()
+        const v0 = ce.body().value()
+        const topicStr = (v0.topics() ?? []).map((t) => {
+          try {
+            return String(StellarSdk.scValToNative(t))
+          } catch {
+            return ''
+          }
+        }).filter(Boolean)
+        let dataStr = ''
+        try {
+          const d = v0.data()
+          if (d) dataStr = String(StellarSdk.scValToNative(d))
+        } catch {
+          /* skip */
+        }
+        if (topicStr.length || dataStr) parts.push([...topicStr, dataStr].filter(Boolean).join(' '))
+      } catch {
+        /* skip */
+      }
+    }
+    return parts.join('; ')
   }
 
   // ── Read functions (simulation, no gas) ──────────────────────────
@@ -194,7 +282,7 @@ export class SorobanClient {
     const votesScVal = xdr.ScVal.scvVec(voteEntries)
 
     const op = this.contract.call(
-      'evaluate',
+      'evaluate_rel',
       new StellarSdk.Address(ownerAddress).toScVal(),
       intentScVal,
       votesScVal,
@@ -234,7 +322,7 @@ export class SorobanClient {
     )
 
     const op = this.contract.call(
-      'set_policy',
+      'set_policy_rel',
       new StellarSdk.Address(ownerAddress).toScVal(),
       rulesScVal,
     )
@@ -260,19 +348,30 @@ export class SorobanClient {
       },
       {
         type: {
-          agent_type: ['symbol'],
-          endpoint: ['string'],
-          description: ['string'],
-          is_active: ['bool'],
+          agent_type: ['symbol', 'symbol'],
+          endpoint:   ['symbol', 'string'],
+          description:['symbol', 'string'],
+          is_active:  ['symbol', 'bool'],
         } as any,
       },
     )
 
+    console.log('[registerAgent] ownerAddress:', ownerAddress, 'agentId:', agentId)
+    const ownerScVal = new StellarSdk.Address(ownerAddress).toScVal()
     const op = this.contract.call(
-      'register_agent',
-      new StellarSdk.Address(ownerAddress).toScVal(),
-      StellarSdk.nativeToScVal(agentId, { type: 'symbol' }),
+      'register_agent_rel',
+      ownerScVal,
+      StellarSdk.nativeToScVal(agentId.replace(/-/g, '_'), { type: 'symbol' }),
       infoScVal,
+    )
+    await this.submitTx(op)
+  }
+
+  async removeAgent(ownerAddress: string, agentId: string): Promise<void> {
+    const op = this.contract.call(
+      'remove_agent_rel',
+      new StellarSdk.Address(ownerAddress).toScVal(),
+      StellarSdk.nativeToScVal(agentId.replace(/-/g, '_'), { type: 'symbol' }),
     )
     await this.submitTx(op)
   }
@@ -304,7 +403,7 @@ export class SorobanClient {
     ])
 
     const op = this.contract.call(
-      'set_consensus',
+      'set_consensus_rel',
       new StellarSdk.Address(ownerAddress).toScVal(),
       configScVal,
     )

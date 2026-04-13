@@ -8,6 +8,14 @@ const AgentResponseSchema = z.object({
   reason: z.string(),
 })
 
+/** ContractError::AgentAlreadyExists = 4 — see contracts/sentinel-governance/src/errors.rs */
+function isAgentAlreadyExistsError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err)
+  if (/AgentAlreadyExists/i.test(msg)) return true
+  if (/Error\(Contract,\s*#?4\)/i.test(msg)) return true
+  return false
+}
+
 export async function getAgents(
   ownerId: string,
   sorobanClient: SorobanClient,
@@ -25,12 +33,19 @@ export async function registerAgent(
   },
   sorobanClient: SorobanClient,
 ): Promise<void> {
-  await sorobanClient.registerAgent(ownerId, agent.agentId, {
+  const payload = {
     agentType: agent.type,
     endpoint: agent.endpoint,
     description: agent.description,
     isActive: true,
-  })
+  }
+  try {
+    await sorobanClient.registerAgent(ownerId, agent.agentId, payload)
+  } catch (err) {
+    if (!isAgentAlreadyExistsError(err)) throw err
+    await sorobanClient.removeAgent(ownerId, agent.agentId)
+    await sorobanClient.registerAgent(ownerId, agent.agentId, payload)
+  }
 }
 
 export async function callAgent(

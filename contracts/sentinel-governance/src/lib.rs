@@ -6,7 +6,7 @@ mod types;
 #[cfg(test)]
 mod test;
 
-use soroban_sdk::{contract, contractimpl, contractevent, symbol_short, Address, Env, Symbol, Vec};
+use soroban_sdk::{contract, contractimpl, contractevent, symbol_short, Address, BytesN, Env, Symbol, Vec};
 
 use crate::errors::ContractError;
 use crate::types::{
@@ -61,6 +61,17 @@ impl SentinelGovernance {
 
     pub fn set_policy(env: Env, owner: Address, rules: PolicyRules) {
         owner.require_auth();
+        Self::set_policy_impl(env, owner, rules);
+    }
+
+    /// Same as [`set_policy`] but authorized by the contract admin (ShieldPay operator keypair).
+    pub fn set_policy_rel(env: Env, owner: Address, rules: PolicyRules) -> Result<(), ContractError> {
+        Self::require_admin(&env)?;
+        Self::set_policy_impl(env, owner, rules);
+        Ok(())
+    }
+
+    fn set_policy_impl(env: Env, owner: Address, rules: PolicyRules) {
         env.storage()
             .persistent()
             .set(&DataKey::Policy(owner.clone()), &rules);
@@ -91,7 +102,26 @@ impl SentinelGovernance {
         info: AgentInfo,
     ) -> Result<(), ContractError> {
         owner.require_auth();
+        Self::register_agent_impl(env, owner, agent_id, info)
+    }
 
+    /// Same as [`register_agent`] but authorized by the contract admin (ShieldPay operator keypair).
+    pub fn register_agent_rel(
+        env: Env,
+        owner: Address,
+        agent_id: Symbol,
+        info: AgentInfo,
+    ) -> Result<(), ContractError> {
+        Self::require_admin(&env)?;
+        Self::register_agent_impl(env, owner, agent_id, info)
+    }
+
+    fn register_agent_impl(
+        env: Env,
+        owner: Address,
+        agent_id: Symbol,
+        info: AgentInfo,
+    ) -> Result<(), ContractError> {
         let key = DataKey::Agent(owner.clone(), agent_id.clone());
         if env.storage().persistent().has(&key) {
             let existing: AgentInfo = env.storage().persistent().get(&key).unwrap();
@@ -133,7 +163,16 @@ impl SentinelGovernance {
 
     pub fn remove_agent(env: Env, owner: Address, agent_id: Symbol) -> Result<(), ContractError> {
         owner.require_auth();
+        Self::remove_agent_impl(env, owner, agent_id)
+    }
 
+    /// Same as [`remove_agent`] but authorized by the contract admin.
+    pub fn remove_agent_rel(env: Env, owner: Address, agent_id: Symbol) -> Result<(), ContractError> {
+        Self::require_admin(&env)?;
+        Self::remove_agent_impl(env, owner, agent_id)
+    }
+
+    fn remove_agent_impl(env: Env, owner: Address, agent_id: Symbol) -> Result<(), ContractError> {
         let key = DataKey::Agent(owner.clone(), agent_id.clone());
         let mut info: AgentInfo = env
             .storage()
@@ -172,6 +211,17 @@ impl SentinelGovernance {
 
     pub fn set_consensus(env: Env, owner: Address, config: ConsensusData) {
         owner.require_auth();
+        Self::set_consensus_impl(env, owner, config);
+    }
+
+    /// Same as [`set_consensus`] but authorized by the contract admin.
+    pub fn set_consensus_rel(env: Env, owner: Address, config: ConsensusData) -> Result<(), ContractError> {
+        Self::require_admin(&env)?;
+        Self::set_consensus_impl(env, owner, config);
+        Ok(())
+    }
+
+    fn set_consensus_impl(env: Env, owner: Address, config: ConsensusData) {
         env.storage()
             .persistent()
             .set(&DataKey::Consensus(owner.clone()), &config);
@@ -196,7 +246,26 @@ impl SentinelGovernance {
         votes: Vec<VoteData>,
     ) -> Result<VerdictRecord, ContractError> {
         owner.require_auth();
+        Self::evaluate_impl(env, owner, intent, votes)
+    }
 
+    /// Same as [`evaluate`] but authorized by the contract admin.
+    pub fn evaluate_rel(
+        env: Env,
+        owner: Address,
+        intent: IntentData,
+        votes: Vec<VoteData>,
+    ) -> Result<VerdictRecord, ContractError> {
+        Self::require_admin(&env)?;
+        Self::evaluate_impl(env, owner, intent, votes)
+    }
+
+    fn evaluate_impl(
+        env: Env,
+        owner: Address,
+        intent: IntentData,
+        votes: Vec<VoteData>,
+    ) -> Result<VerdictRecord, ContractError> {
         if votes.is_empty() {
             return Err(ContractError::NoVotesProvided);
         }
@@ -360,7 +429,27 @@ impl SentinelGovernance {
             })
     }
 
+    // ── Upgrade (admin only) ─────────────────────────────────────────
+
+    /// Point this contract at new WASM already present in the ledger.
+    /// Upload the new module first (e.g. `stellar contract install` / `upload_contract_wasm`), then pass the hash here.
+    pub fn upgrade(env: Env, new_wasm_hash: BytesN<32>) -> Result<(), ContractError> {
+        Self::require_admin(&env)?;
+        env.deployer().update_current_contract_wasm(new_wasm_hash);
+        Ok(())
+    }
+
     // ── Internal helpers ───────────────────────────────────────────────
+
+    fn require_admin(env: &Env) -> Result<(), ContractError> {
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(ContractError::NotInitialized)?;
+        admin.require_auth();
+        Ok(())
+    }
 
     fn check_policy_internal(
         env: &Env,

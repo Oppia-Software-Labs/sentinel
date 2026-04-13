@@ -132,7 +132,7 @@ async function setPolicy(): Promise<void> {
     }),
   ])
 
-  const op   = contract.call('set_policy', new StellarSdk.Address(ownerAddress).toScVal(), rulesScVal)
+  const op   = contract.call('set_policy_rel', new StellarSdk.Address(ownerAddress).toScVal(), rulesScVal)
   const hash = await submitTx(op)
   console.log('  ✓ policy set  tx:', hash)
 }
@@ -168,7 +168,7 @@ async function registerAgent(id: string, endpoint: string, description: string):
   ])
 
   const op   = contract.call(
-    'register_agent',
+    'register_agent_rel',
     new StellarSdk.Address(ownerAddress).toScVal(),
     StellarSdk.nativeToScVal(id, { type: 'symbol' }),
     infoScVal,
@@ -208,7 +208,7 @@ async function setConsensus(): Promise<void> {
     }),
   ])
 
-  const op   = contract.call('set_consensus', new StellarSdk.Address(ownerAddress).toScVal(), configScVal)
+  const op   = contract.call('set_consensus_rel', new StellarSdk.Address(ownerAddress).toScVal(), configScVal)
   const hash = await submitTx(op)
   console.log('  ✓ consensus set  tx:', hash)
 }
