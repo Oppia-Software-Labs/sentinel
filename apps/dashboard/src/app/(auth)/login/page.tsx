@@ -68,6 +68,7 @@ export default function LoginPage() {
         <div className="space-y-1.5">
           <Label htmlFor="email">Email</Label>
           <Input
+            className="mt-2"
             id="email"
             type="email"
             placeholder="you@example.com"

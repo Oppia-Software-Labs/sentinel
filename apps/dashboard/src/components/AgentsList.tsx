@@ -5,6 +5,13 @@ import { Bot, Zap, Globe, Circle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { RegisterAgentModal } from './RegisterAgentModal'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import type { RegisteredAgent } from '@/types'
 
 interface Props {
@@ -13,6 +20,7 @@ interface Props {
 
 export function AgentsList({ initialAgents }: Props) {
   const [agents, setAgents] = useState(initialAgents)
+  const [detailAgent, setDetailAgent] = useState<RegisteredAgent | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
@@ -61,21 +69,85 @@ export function AgentsList({ initialAgents }: Props) {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {agents.map((agent) => (
-            <AgentCard key={agent.id} agent={agent} />
+            <AgentCard key={agent.id} agent={agent} onOpen={() => setDetailAgent(agent)} />
           ))}
         </div>
       )}
+
+      <Dialog open={detailAgent !== null} onOpenChange={(open) => !open && setDetailAgent(null)}>
+        <DialogContent className="sm:max-w-md">
+          {detailAgent && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="font-mono text-base">{detailAgent.agent_id}</DialogTitle>
+                <DialogDescription className="sr-only">
+                  Details for agent {detailAgent.agent_id}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 text-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={cn(
+                      'text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-md',
+                      detailAgent.type === 'shieldpay'
+                        ? 'bg-emerald-900/10 text-emerald-900'
+                        : 'bg-emerald-900/8 text-emerald-800',
+                    )}
+                  >
+                    {detailAgent.type}
+                  </span>
+                  <span
+                    className={cn(
+                      'text-[10px] font-semibold uppercase tracking-wide',
+                      detailAgent.is_active ? 'text-emerald-800' : 'text-muted-foreground',
+                    )}
+                  >
+                    {detailAgent.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+                {detailAgent.provider && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-0.5">Provider</p>
+                    <p className="font-mono text-xs">{detailAgent.provider}</p>
+                  </div>
+                )}
+                {detailAgent.description && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-0.5">Description</p>
+                    <p className="text-xs text-foreground leading-relaxed">{detailAgent.description}</p>
+                  </div>
+                )}
+                {detailAgent.endpoint && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-0.5">Endpoint</p>
+                    <p className="font-mono text-[11px] break-all text-foreground">{detailAgent.endpoint}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-xs text-muted-foreground mb-0.5">Registered</p>
+                  <p className="text-xs text-foreground">
+                    {new Date(detailAgent.created_at).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
 
-function AgentCard({ agent }: { agent: RegisteredAgent }) {
+function AgentCard({ agent, onOpen }: { agent: RegisteredAgent; onOpen: () => void }) {
   const isShieldPay = agent.type === 'shieldpay'
 
   return (
-    <div
+    <button
+      type="button"
+      onClick={onOpen}
       className={cn(
-        'bg-card border rounded-2xl p-5 space-y-3 transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.06)]',
+        'w-full text-left bg-card border rounded-2xl p-5 space-y-3 transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.06)]',
+        'hover:border-emerald-900/25 hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         agent.is_active ? 'border-border' : 'border-border/40 opacity-60',
       )}
     >
@@ -133,6 +205,6 @@ function AgentCard({ agent }: { agent: RegisteredAgent }) {
           </span>
         </div>
       )}
-    </div>
+    </button>
   )
 }
