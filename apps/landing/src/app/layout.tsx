@@ -11,6 +11,9 @@ const sans = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: 'Sentinel',
   description: 'AI agent payment governance: Sentinel + ShieldPay',
+  icons: {
+    icon: '/brand/sentinel-logo.png',
+  },
 }
 
 export default function RootLayout({
