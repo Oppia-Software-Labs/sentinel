@@ -1,13 +1,13 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
   Shield,
   Bot,
   Bell,
-  ShieldCheck,
   ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -28,8 +28,15 @@ export function Sidebar() {
     <aside className="flex h-screen w-70 shrink-0 flex-col border-r border-emerald-900/10 bg-background">
       {/* Brand */}
       <div className="flex items-center gap-3.5 px-5 pb-6 pt-12">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-950 text-emerald-50">
-          <ShieldCheck className="h-[22px] w-[22px] shrink-0" strokeWidth={2.25} />
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-950">
+          <Image
+            src="/brand/sentinel-logo.png"
+            alt="Sentinel"
+            width={120}
+            height={120}
+            className="h-[22px] w-[22px] object-contain"
+            priority
+          />
         </div>
         <span className="text-lg font-semibold tracking-tight text-emerald-950">
           Sentinel
