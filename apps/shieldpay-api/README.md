@@ -12,8 +12,8 @@ Interactive docs: [`http://localhost:4000/docs`](http://localhost:4000/docs)
 AI Agent
    │
    ▼
-POST /api/proxy/verify  ──►  @sentinel/sdk verify()  ──►  Soroban policy check
-POST /api/proxy/settle  ──►  @sentinel/sdk evaluate() ──►  Soroban consensus + policy
+POST /api/proxy/verify  ──►  @oppialabs/sentinel-sdk verify()  ──►  Soroban policy check
+POST /api/proxy/settle  ──►  @oppialabs/sentinel-sdk evaluate() ──►  Soroban consensus + policy
                                     │
                               Trustless Work (escrow)
                                     │

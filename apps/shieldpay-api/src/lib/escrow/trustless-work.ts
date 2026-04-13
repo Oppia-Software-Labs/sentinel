@@ -1,5 +1,5 @@
 /**
- * Trustless Work escrow — lives only in ShieldPay API (not in @sentinel/sdk).
+ * Trustless Work escrow — lives only in ShieldPay API (not in @oppialabs/sentinel-sdk).
  * Wire to TW HTTP API using env from apps/shieldpay-api/.env.local.
  *
  * Full escrow lifecycle:

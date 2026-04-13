@@ -1,11 +1,11 @@
-# @sentinel/sdk
+# @oppialabs/sentinel-sdk
 
 TypeScript SDK for **Sentinel / ShieldPay**: evaluate payment intents against on-chain policy, run multi-agent consensus via Soroban, and optionally mirror results to Supabase.
 
 ## Install
 
 ```bash
-npm install @sentinel/sdk
+npm install @oppialabs/sentinel-sdk
 ```
 
 Peer-style dependencies are bundled as normal dependencies (`@stellar/stellar-sdk`, `@supabase/supabase-js`, `axios`, `zod`). Use Node 18+ with native ESM (`"type": "module"` in consuming apps) or a bundler that resolves ESM.
@@ -13,7 +13,7 @@ Peer-style dependencies are bundled as normal dependencies (`@stellar/stellar-sd
 ## Build from source (monorepo)
 
 ```bash
-npm run build -w @sentinel/sdk
+npm run build -w @oppialabs/sentinel-sdk
 ```
 
 Published artifacts live under `dist/`.
@@ -27,7 +27,7 @@ Published artifacts live under `dist/`.
 Configure Soroban access, then:
 
 ```ts
-import { verify, evaluate, loadSorobanConfig } from '@sentinel/sdk'
+import { verify, evaluate, loadSorobanConfig } from '@oppialabs/sentinel-sdk'
 
 const soroban = loadSorobanConfig() // or pass your own SorobanConfig
 

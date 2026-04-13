@@ -26,7 +26,7 @@ Autonomous agents can burn API and on-chain budget in loops, retry storms, or ba
 
 | Area | Description |
 | --- | --- |
-| **@sentinel/sdk** | Shared types, policy engine, consensus coordinator, agent registry (**no escrow**) |
+| **@oppialabs/sentinel-sdk** | Shared types, policy engine, consensus coordinator, agent registry (**no escrow**) |
 | **ShieldPay API** | Trustless Work escrow (fund / release / refund), proxy `/verify` · `/settle` to the hosted facilitator, MPP session hooks, built-in voting agents |
 | **MCP Server** | 4 tools for Claude Code: `request_payment`, `get_policy`, `get_transactions`, `register_agent` |
 | **Dashboard** | Next.js UI, Supabase Realtime for transactions, votes, MPP sessions, policies, agents |
@@ -63,7 +63,7 @@ Optional:
    npm install
    ```
 
-3. **Build the workspace** (compiles `@sentinel/sdk` and Next apps)
+3. **Build the workspace** (compiles `@oppialabs/sentinel-sdk` and Next apps)
 
    ```bash
    npm run build
@@ -201,7 +201,7 @@ Browser-side proxies + UI helpers:
 | --- | --- | --- |
 | **On-chain governance** | `contracts/sentinel-governance` | Soroban contract (Rust, `soroban-sdk`): policy, quorum, agent registry, verdicts. **Not** an npm workspace; build and deploy with the Soroban/Stellar toolchain. |
 | **Governance library** | `packages/sentinel-sdk` | Types, `verify` / `evaluate`, `SorobanClient`, policy, consensus, Supabase mirror. Invokes the contract over RPC. **No** Trustless Work, **no** HTTP to the x402 facilitator. |
-| **Payments API** | `apps/shieldpay-api` | HTTP entry from agents. Calls `@sentinel/sdk`, then **escrow** (Trustless Work), **facilitator** (`/verify`, `/settle`), **MPP** routes, built-in voting agents. |
+| **Payments API** | `apps/shieldpay-api` | HTTP entry from agents. Calls `@oppialabs/sentinel-sdk`, then **escrow** (Trustless Work), **facilitator** (`/verify`, `/settle`), **MPP** routes, built-in voting agents. |
 | **MCP Server** | `apps/shieldpay-mcp` | MCP server for Claude Code. Exposes ShieldPay as 4 tools. |
 | **Dashboard** | `apps/dashboard` | Next.js UI + Supabase Realtime (browser client only). |
 
@@ -264,7 +264,7 @@ sentinel/
 │           └── test.rs
 │
 ├── packages/
-│   └── sentinel-sdk/            # @sentinel/sdk — publishable-style package
+│   └── sentinel-sdk/            # @oppialabs/sentinel-sdk — publishable-style package
 │       ├── package.json
 │       ├── tsconfig.json
 │       └── src/
@@ -341,13 +341,13 @@ sentinel/
 | **React 19** | UI |
 | **TypeScript 5.7** | Shared typing across workspaces |
 | **Turborepo** | Task orchestration |
-| **npm workspaces** | `@sentinel/sdk` linked via `file:../../packages/sentinel-sdk` |
+| **npm workspaces** | `@oppialabs/sentinel-sdk` linked via `file:../../packages/sentinel-sdk` |
 
 ### Governance & data
 
 | Technology | Role |
 | --- | --- |
-| **Soroban (`contracts/sentinel-governance`)** | On-chain policy, quorum, agent registry, verdicts; invoked by `@sentinel/sdk` over RPC |
+| **Soroban (`contracts/sentinel-governance`)** | On-chain policy, quorum, agent registry, verdicts; invoked by `@oppialabs/sentinel-sdk` over RPC |
 | **Supabase** | Postgres + Realtime for transactions, votes, sessions, policies |
 | **Trustless Work** | Escrow API used **from ShieldPay API** after Sentinel approves (fund / release / refund) |
 | **@stellar/mpp** | MPP flows on Stellar (with compatible `@stellar/stellar-sdk` / `mppx` peers) |
@@ -369,7 +369,7 @@ Self-hosting a Relayer + plugin is optional; see [OpenZeppelin facilitator guide
 ```
 Agent  →  HTTP  →  ShieldPay API (proxy)
                       ↓
-              @sentinel/sdk: verify (policy) or evaluate (policy + consensus)
+              @oppialabs/sentinel-sdk: verify (policy) or evaluate (policy + consensus)
                       ↓
               Soroban contract (`contracts/sentinel-governance`) via RPC / txs
                       ↓

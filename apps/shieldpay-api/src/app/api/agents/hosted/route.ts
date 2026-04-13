@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import type { PaymentIntent } from '@sentinel/sdk'
+import type { PaymentIntent } from '@oppialabs/sentinel-sdk'
 import { createServiceRoleClient } from '../../../../lib/supabase/server'
 import { decryptApiKey } from '../../../../lib/crypto'
 import { callLLMAgent, type LLMProvider } from '../../../../lib/llm'

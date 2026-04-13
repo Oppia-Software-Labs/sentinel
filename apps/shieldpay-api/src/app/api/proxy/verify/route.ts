@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import axios from 'axios'
-import { verify, loadSorobanConfig } from '@sentinel/sdk'
-import type { PaymentIntent } from '@sentinel/sdk'
+import { verify, loadSorobanConfig } from '@oppialabs/sentinel-sdk'
+import type { PaymentIntent } from '@oppialabs/sentinel-sdk'
 import { validateApiKey, unauthorizedResponse } from '../../../../lib/auth/api-key'
 
 export async function POST(req: NextRequest) {

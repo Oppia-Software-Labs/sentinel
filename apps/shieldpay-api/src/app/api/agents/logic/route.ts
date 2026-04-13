@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import type { PaymentIntent } from '@sentinel/sdk'
+import type { PaymentIntent } from '@oppialabs/sentinel-sdk'
 
 interface AgentInput {
   intent: PaymentIntent

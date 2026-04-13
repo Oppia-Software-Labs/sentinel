@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { loadSorobanConfig, createSorobanClient, mirrorPolicy } from '@sentinel/sdk'
+import { loadSorobanConfig, createSorobanClient, mirrorPolicy } from '@oppialabs/sentinel-sdk'
 import { validateApiKey, unauthorizedResponse } from '../../../../lib/auth/api-key'
 import { createServiceRoleClient } from '../../../../lib/supabase/server'
 

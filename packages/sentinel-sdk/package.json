@@ -1,5 +1,5 @@
 {
-  "name": "@sentinel/sdk",
+  "name": "@oppialabs/sentinel-sdk",
   "version": "0.1.1",
   "description": "TypeScript SDK for Sentinel / ShieldPay: Soroban policy checks, multi-agent consensus, and Supabase mirroring for payment intents.",
   "private": false,
@@ -7,7 +7,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Oppia-Software-Labs/sentinel.git",
+    "url": "git+https://github.com/Oppia-Software-Labs/sentinel.git",
     "directory": "packages/sentinel-sdk"
   },
   "keywords": [

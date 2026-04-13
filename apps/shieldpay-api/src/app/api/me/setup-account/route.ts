@@ -14,7 +14,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import * as StellarSdk from '@stellar/stellar-sdk'
-import { registerAgent, loadSorobanConfig, createSorobanClient, mirrorAgent, mirrorPolicy, mirrorConsensus } from '@sentinel/sdk'
+import { registerAgent, loadSorobanConfig, createSorobanClient, mirrorAgent, mirrorPolicy, mirrorConsensus } from '@oppialabs/sentinel-sdk'
 import { createServiceRoleClient } from '../../../../lib/supabase/server'
 import { validateApiKey, unauthorizedResponse } from '../../../../lib/auth/api-key'
 

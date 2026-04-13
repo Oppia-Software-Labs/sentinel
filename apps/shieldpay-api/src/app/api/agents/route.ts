@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { registerAgent, getAgents, loadSorobanConfig, createSorobanClient, mirrorAgent } from '@sentinel/sdk'
+import { registerAgent, getAgents, loadSorobanConfig, createSorobanClient, mirrorAgent } from '@oppialabs/sentinel-sdk'
 import { createServiceRoleClient } from '../../../lib/supabase/server'
 import { encryptApiKey } from '../../../lib/crypto'
 import type { LLMProvider } from '../../../lib/llm'

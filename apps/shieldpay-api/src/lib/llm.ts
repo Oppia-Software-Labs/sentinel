@@ -1,4 +1,4 @@
-import type { PaymentIntent } from '@sentinel/sdk'
+import type { PaymentIntent } from '@oppialabs/sentinel-sdk'
 
 export type LLMProvider = 'openai' | 'anthropic'
 
