@@ -190,7 +190,7 @@ async function fireEmail(
   event: NotificationEvent,
   payload: Record<string, unknown>,
 ): Promise<void> {
-  const { to, from } = config.config
+  const { to } = config.config
   const api_key = process.env.RESEND_API_KEY;
   if (!to || !api_key) throw new Error('email to/api_key not configured')
 
@@ -201,7 +201,7 @@ async function fireEmail(
   const html    = buildHtml(event, payload)
 
   const { error } = await resend.emails.send({
-    from: from || 'Sentinel <onboarding@resend.dev>',
+    from: 'Sentinel <noreply@oppialabs.com>',
     to: [to],
     subject,
     html,
