@@ -18,7 +18,7 @@ const faqs = [
   {
     question: 'Which blockchains and payment protocols are supported?',
     answer:
-      'ShieldPay supports x402 (HTTP-native payments), Stellar via MPP (Micropayment Protocol), and Trustless Work escrow on EVM-compatible chains. Sentinel is chain-agnostic: it governs payment intent, not execution protocol.',
+      'ShieldPay supports x402 (HTTP-native payments), MPP (Micropayment Protocol), and Trustless Work escrow all on the Stellar Network.',
   },
   {
     question: 'How does the multi-agent consensus voting work?',
@@ -28,7 +28,7 @@ const faqs = [
   {
     question: 'Can I use only Sentinel or only ShieldPay without the full stack?',
     answer:
-      'Yes. Sentinel can be used standalone as a governance and policy enforcement engine. ShieldPay can be used standalone as a payment facilitator. Running both gives the strongest guarantee: every intent governed before execution, every execution settled trustlessly.',
+      'Yes. Sentinel can be used standalone as a governance and policy enforcement engine (just not yet). ShieldPay can be used standalone as a payment facilitator. Running both gives the strongest guarantee: every intent governed before execution, every execution settled trustlessly.',
   },
   {
     question: 'What happens if an agent exceeds its spend policy mid-session?',
