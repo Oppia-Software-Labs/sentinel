@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
           temperature,
           updated_at: new Date().toISOString(),
         },
-        { onConflict: 'agent_id' },
+        { onConflict: 'owner_id,agent_id' },
       )
     }
 

@@ -118,6 +118,6 @@ export async function mirrorAgent(
         description: agent.description,
         is_active: agent.isActive,
       },
-      { onConflict: 'agent_id' },
+      { onConflict: 'owner_id,agent_id' },
     )
 }
