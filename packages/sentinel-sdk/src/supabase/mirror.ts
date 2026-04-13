@@ -96,6 +96,25 @@ export async function mirrorPolicy(
     )
 }
 
+export async function mirrorConsensus(
+  supabase: SupabaseClient,
+  ownerId: string,
+  config: { quorum: string; timeoutMs: number; agentIds: string[] },
+): Promise<void> {
+  await supabase
+    .from('consensus_config')
+    .upsert(
+      {
+        owner_id: ownerId,
+        quorum: config.quorum,
+        timeout_ms: config.timeoutMs,
+        agents: config.agentIds,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'owner_id' },
+    )
+}
+
 export async function mirrorAgent(
   supabase: SupabaseClient,
   ownerId: string,
