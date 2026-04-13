@@ -11,11 +11,14 @@ import {
   vendorFromUrl,
   tokenUnitsToUsdc,
 } from '../../../../lib/x402/client'
+import { validateApiKey, unauthorizedResponse } from '../../../../lib/auth/api-key'
 
 export async function POST(req: NextRequest) {
+  const ownerId = await validateApiKey(req)
+  if (!ownerId) return unauthorizedResponse()
+
   let body: {
     intent: PaymentIntent
-    ownerId: string
     resourceUrl?: string     // optional: real x402-protected URL to fetch after approval
     resourceMethod?: string  // HTTP method for the resource (default GET)
     resourceBody?: unknown   // body for POST resources
@@ -27,9 +30,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  let { intent, ownerId, resourceUrl, resourceMethod = 'GET', resourceBody } = body
-  if (!intent || !ownerId) {
-    return NextResponse.json({ error: 'Missing intent or ownerId' }, { status: 400 })
+  let { intent, resourceUrl, resourceMethod = 'GET', resourceBody } = body
+  if (!intent) {
+    return NextResponse.json({ error: 'Missing intent' }, { status: 400 })
   }
 
   // ── If resourceUrl given, auto-populate intent from 402 requirements ─────

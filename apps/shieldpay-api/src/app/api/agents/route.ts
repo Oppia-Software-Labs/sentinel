@@ -3,6 +3,7 @@ import { registerAgent, getAgents, loadSorobanConfig, createSorobanClient, mirro
 import { createServiceRoleClient } from '../../../lib/supabase/server'
 import { encryptApiKey } from '../../../lib/crypto'
 import type { LLMProvider } from '../../../lib/llm'
+import { validateApiKey, unauthorizedResponse } from '../../../lib/auth/api-key'
 
 interface RegisterBody {
   ownerId: string
@@ -19,6 +20,9 @@ interface RegisterBody {
 }
 
 export async function POST(req: NextRequest) {
+  const ownerId = await validateApiKey(req)
+  if (!ownerId) return unauthorizedResponse()
+
   let body: RegisterBody
 
   try {
@@ -28,7 +32,6 @@ export async function POST(req: NextRequest) {
   }
 
   const {
-    ownerId,
     agentId,
     description = '',
     provider,
@@ -40,9 +43,9 @@ export async function POST(req: NextRequest) {
 
   let { type = 'custom', endpoint } = body
 
-  if (!ownerId || !agentId) {
+  if (!agentId) {
     return NextResponse.json(
-      { error: 'ownerId and agentId are required' },
+      { error: 'agentId is required' },
       { status: 400 },
     )
   }
@@ -109,11 +112,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const ownerId = req.nextUrl.searchParams.get('ownerId')
-
-  if (!ownerId) {
-    return NextResponse.json({ error: 'ownerId query param required' }, { status: 400 })
-  }
+  const ownerId = await validateApiKey(req)
+  if (!ownerId) return unauthorizedResponse()
 
   try {
     const soroban = loadSorobanConfig()
@@ -127,7 +127,10 @@ export async function GET(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  let body: { ownerId: string; agentId: string }
+  const ownerId = await validateApiKey(req)
+  if (!ownerId) return unauthorizedResponse()
+
+  let body: { agentId: string }
 
   try {
     body = await req.json()
@@ -135,10 +138,10 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  const { ownerId, agentId } = body
-  if (!ownerId || !agentId) {
+  const { agentId } = body
+  if (!agentId) {
     return NextResponse.json(
-      { error: 'ownerId and agentId are required' },
+      { error: 'agentId is required' },
       { status: 400 },
     )
   }
