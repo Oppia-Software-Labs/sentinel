@@ -119,8 +119,8 @@ export function RegisterAgentModal() {
                   className={`flex-1 py-1.5 rounded-md text-xs font-medium border transition-colors ${
                     form.type === t
                       ? t === 'shieldpay'
-                        ? 'bg-blue-500/15 text-blue-400 border-blue-500/30'
-                        : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                        ? 'bg-emerald-900/12 text-emerald-900 border-emerald-900/25'
+                        : 'bg-emerald-900/8 text-emerald-800 border-emerald-900/18'
                       : 'bg-transparent text-muted-foreground border-border hover:border-border/80'
                   }`}
                 >

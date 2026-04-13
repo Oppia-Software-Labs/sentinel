@@ -15,10 +15,10 @@ interface Props {
 type Accent = 'blue' | 'red' | 'emerald' | 'amber' | 'muted'
 
 const ACCENT: Record<Accent, { value: string; icon: string }> = {
-  blue:    { value: 'text-blue-400',    icon: 'text-blue-400/50'    },
-  red:     { value: 'text-red-400',     icon: 'text-red-400/50'     },
-  emerald: { value: 'text-emerald-400', icon: 'text-emerald-400/50' },
-  amber:   { value: 'text-amber-400',   icon: 'text-amber-400/50'   },
+  blue:    { value: 'text-emerald-800', icon: 'text-emerald-800/45' },
+  red:     { value: 'text-red-700',     icon: 'text-red-700/45'     },
+  emerald: { value: 'text-emerald-900', icon: 'text-emerald-900/45' },
+  amber:   { value: 'text-amber-700',   icon: 'text-amber-700/45'   },
   muted:   { value: 'text-muted-foreground', icon: 'text-muted-foreground/50' },
 }
 
@@ -37,7 +37,7 @@ function StatCard({
 }) {
   const { value: valueClass, icon: iconClass } = ACCENT[accent]
   return (
-    <div className="bg-card border border-border rounded-lg p-4 flex flex-col gap-3">
+    <div className="bg-card border border-border rounded-2xl p-5 flex flex-col gap-3 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
       <div className="flex items-center justify-between">
         <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
           {label}

@@ -38,7 +38,7 @@ function HashRow({ label, value, href }: HashRowProps) {
             title="Copy"
           >
             {copied ? (
-              <Check className="h-3 w-3 text-emerald-400" />
+              <Check className="h-3 w-3 text-emerald-800" />
             ) : (
               <Copy className="h-3 w-3" />
             )}
@@ -48,7 +48,7 @@ function HashRow({ label, value, href }: HashRowProps) {
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="shrink-0 text-muted-foreground/50 hover:text-blue-400 transition-colors"
+              className="shrink-0 text-muted-foreground/50 hover:text-emerald-800 transition-colors"
               title="View on Stellar Expert"
             >
               <ExternalLink className="h-3 w-3" />

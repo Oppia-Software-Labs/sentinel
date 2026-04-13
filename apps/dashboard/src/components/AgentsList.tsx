@@ -49,7 +49,7 @@ export function AgentsList({ initialAgents }: Props) {
       </div>
 
       {agents.length === 0 ? (
-        <div className="bg-card border border-border rounded-lg py-16 text-center">
+        <div className="bg-card border border-border rounded-2xl py-16 text-center shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
           <Bot className="h-6 w-6 text-muted-foreground/40 mx-auto mb-3" />
           <p className="text-sm text-muted-foreground">No agents registered yet.</p>
           <p className="text-xs text-muted-foreground/60 mt-1">
@@ -73,7 +73,7 @@ function AgentCard({ agent }: { agent: RegisteredAgent }) {
   return (
     <div
       className={cn(
-        'bg-card border rounded-lg p-4 space-y-3 transition-colors',
+        'bg-card border rounded-2xl p-5 space-y-3 transition-colors shadow-[0_1px_3px_rgba(0,0,0,0.06)]',
         agent.is_active ? 'border-border' : 'border-border/40 opacity-60',
       )}
     >
@@ -83,12 +83,12 @@ function AgentCard({ agent }: { agent: RegisteredAgent }) {
           <div
             className={cn(
               'h-7 w-7 rounded-md flex items-center justify-center shrink-0',
-              isShieldPay ? 'bg-blue-500/10' : 'bg-emerald-500/10',
+              isShieldPay ? 'bg-emerald-900/10' : 'bg-emerald-900/8',
             )}
           >
             {isShieldPay
-              ? <Zap className="h-3.5 w-3.5 text-blue-400" />
-              : <Bot className="h-3.5 w-3.5 text-emerald-400" />
+              ? <Zap className="h-3.5 w-3.5 text-emerald-900" />
+              : <Bot className="h-3.5 w-3.5 text-emerald-800" />
             }
           </div>
           <span className="font-mono text-sm font-medium text-foreground truncate">
@@ -100,13 +100,13 @@ function AgentCard({ agent }: { agent: RegisteredAgent }) {
           <Circle
             className={cn(
               'h-2 w-2',
-              agent.is_active ? 'fill-emerald-400 text-emerald-400' : 'fill-muted text-muted',
+              agent.is_active ? 'fill-emerald-800 text-emerald-800' : 'fill-muted text-muted',
             )}
           />
           <span
             className={cn(
               'text-[10px] font-semibold uppercase tracking-wide',
-              isShieldPay ? 'text-blue-400' : 'text-emerald-400',
+              isShieldPay ? 'text-emerald-900' : 'text-emerald-800',
             )}
           >
             {agent.type}
