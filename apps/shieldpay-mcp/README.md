@@ -23,13 +23,12 @@ Create `apps/shieldpay-mcp/.env` (or set env vars in your MCP client config):
 SENTINEL_API_KEY=sk_live_...
 
 # Optional
-SENTINEL_API_URL=https://api.sentinel.xyz
+SENTINEL_API_URL=
 SENTINEL_AGENT_ID=claude-code
 ```
 
 Defaults in code:
 
-- `SENTINEL_API_URL` defaults to `https://api.sentinel.xyz`
 - `SENTINEL_AGENT_ID` defaults to `claude-code`
 
 ## Local development

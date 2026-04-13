@@ -9,7 +9,7 @@
  * Setup (one command):
  *   claude mcp add shieldpay -- npx @oppialabs/sentinel-mcp -e SENTINEL_API_KEY=sk_live_...
  *
- * Get your API key at: https://app.sentinel.xyz/dashboard/settings
+ * Get your API key at: https://sentinel-dashboard-oppia//dashboard/settings
  *
  * Tools exposed:
  *   - request_payment   Submit a payment intent through governance
@@ -22,7 +22,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
 
-const API_URL  = process.env.SENTINEL_API_URL ?? 'https://api.sentinel.xyz'
+const API_URL  = process.env.SENTINEL_API_URL 
 const API_KEY  = process.env.SENTINEL_API_KEY ?? ''
 const AGENT_ID = process.env.SENTINEL_AGENT_ID ?? 'claude-code'
 
@@ -59,7 +59,7 @@ server.tool(
       return {
         content: [{
           type: 'text',
-          text: 'Error: SENTINEL_API_KEY is not configured.\n\nGet your key at https://app.sentinel.xyz/dashboard/settings, then run:\n  claude mcp add shieldpay -- npx @oppialabs/sentinel-mcp -e SENTINEL_API_KEY=sk_live_...',
+          text: 'Error: SENTINEL_API_KEY is not configured.\n\nGet your key at https://sentinel-dashboard-oppia//dashboard/settings, then run:\n  claude mcp add shieldpay -- npx @oppialabs/sentinel-mcp -e SENTINEL_API_KEY=sk_live_...',
         }],
         isError: true,
       }
