@@ -1,10 +1,17 @@
+import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { getSessionUser } from '@/lib/supabase/session'
 import { StatsCards } from '@/components/StatsCards'
 import { TransactionsTable } from '@/components/TransactionsTable'
 import { KillSwitchButton } from '@/components/KillSwitchButton'
 import type { Transaction } from '@/types'
 
 export default async function DashboardPage() {
+  const session = await getSessionUser()
+  if (!session) redirect('/onboarding')
+
+  const { ownerId } = session
+
   let transactions: Transaction[] = []
   let activeSessionCount = 0
   let agentCount = 0
@@ -16,15 +23,18 @@ export default async function DashboardPage() {
       supabase
         .from('transactions')
         .select('*')
+        .eq('owner_id', ownerId)
         .order('created_at', { ascending: false })
         .limit(50),
       supabase
         .from('mpp_sessions')
         .select('*', { count: 'exact', head: true })
+        .eq('owner_id', ownerId)
         .eq('status', 'active'),
       supabase
         .from('registered_agents')
         .select('*', { count: 'exact', head: true })
+        .eq('owner_id', ownerId)
         .eq('is_active', true),
     ])
 
@@ -59,15 +69,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Page header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-base font-semibold tracking-tight">Overview</h1>
-          <div className="flex items-center gap-1.5">
-            <span className="live-dot" />
-            <span className="text-xs font-medium text-emerald-800">Live</span>
-          </div>
-        </div>
+      <div className="flex justify-end">
         <KillSwitchButton initialSessionCount={activeSessionCount} />
       </div>
 

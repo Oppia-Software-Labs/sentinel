@@ -43,7 +43,7 @@ export default function SentinelSection() {
                 <p className="text-[#86c49a]">&gt; Policy check passed</p>
                 <p className="text-white/40">production_v3 · daily_cap OK</p>
                 <p className="text-[#15803d]">&gt; Multi-agent consensus reached</p>
-                <p className="text-white/45">quorum 3/3 · approve ×3</p>
+                <p className="text-white/45">quorum 3/3 · approve x3</p>
                 <p className="text-[#86c49a]">&gt; Approved</p>
                 <p className="border-t border-white/6 pt-2 text-[10px] text-white/30">
                   signed for ShieldPay · 14ms

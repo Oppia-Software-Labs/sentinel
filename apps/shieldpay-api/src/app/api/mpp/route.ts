@@ -8,6 +8,7 @@ import {
 } from '../../../lib/mpp/session-manager'
 import { createServiceRoleClient } from '../../../lib/supabase/server'
 import { dispatchNotifications } from '../../../lib/notifications/dispatch'
+import { validateApiKey, unauthorizedResponse } from '../../../lib/auth/api-key'
 
 type MppAction = 'open' | 'charge' | 'close' | 'kill' | 'kill_all'
 
@@ -21,6 +22,9 @@ interface MppBody {
 }
 
 export async function POST(req: NextRequest) {
+  const authOwnerId = await validateApiKey(req)
+  if (!authOwnerId) return unauthorizedResponse()
+
   let body: MppBody
 
   try {
@@ -29,7 +33,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  const { action, sessionId, agentId, ownerId, amount, reason } = body
+  const { action, sessionId, agentId, amount, reason } = body
+  // Always use the authenticated owner_id; ignore any client-supplied ownerId
+  const ownerId = authOwnerId
 
   try {
     switch (action) {

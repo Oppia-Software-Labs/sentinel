@@ -1,6 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
+/** Auth-aware server client. Reads and writes session cookies. */
 export async function createServerSupabaseClient() {
   const cookieStore = await cookies()
 
@@ -12,8 +14,14 @@ export async function createServerSupabaseClient() {
         getAll() {
           return cookieStore.getAll()
         },
-        setAll() {
-          // No-op in read-only server components
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options)
+            })
+          } catch {
+            // Server components can't set cookies — middleware handles refresh
+          }
         },
       },
     },
@@ -22,7 +30,6 @@ export async function createServerSupabaseClient() {
 
 /** Service role client — bypasses RLS. Server-side only. */
 export function createServiceRoleClient() {
-  const { createClient } = require('@supabase/supabase-js')
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,

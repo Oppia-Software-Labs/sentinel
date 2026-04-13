@@ -1,23 +1,25 @@
+import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { getSessionUser } from '@/lib/supabase/session'
 import { AgentsList } from '@/components/AgentsList'
 import type { RegisteredAgent } from '@/types'
 
 export default async function AgentsPage() {
+  const session = await getSessionUser()
+  if (!session) redirect('/onboarding')
+
+  const { ownerId } = session
   let agents: RegisteredAgent[] = []
 
   try {
     const supabase = await createServerSupabaseClient()
-    const ownerId  = process.env.NEXT_PUBLIC_OWNER_ID
+    const { data } = await supabase
+      .from('registered_agents')
+      .select('*')
+      .eq('owner_id', ownerId)
+      .order('created_at', { ascending: false })
 
-    if (ownerId) {
-      const { data } = await supabase
-        .from('registered_agents')
-        .select('*')
-        .eq('owner_id', ownerId)
-        .order('created_at', { ascending: false })
-
-      agents = (data ?? []) as RegisteredAgent[]
-    }
+    agents = (data ?? []) as RegisteredAgent[]
   } catch {
     // Supabase not configured — render empty state
   }
@@ -42,19 +44,6 @@ export default async function AgentsPage() {
           <p className="mt-1 text-sm text-white/70">Voting agents registered on-chain with quorum-based approval</p>
         </div>
       </div>
-
-      {/* Page header */}
-      <div>
-        <h1 className="text-base font-semibold tracking-tight">Agents</h1>
-        <p className="text-xs text-muted-foreground mt-1">
-          Voting agents registered on-chain. Each receives a{' '}
-          <span className="font-mono">POST</span> with the payment intent and
-          responds <span className="font-mono">approve</span> /{' '}
-          <span className="font-mono">reject</span>. Quorum decides the verdict.
-        </p>
-      </div>
-
-      <div className="border-t border-border" />
 
       <AgentsList initialAgents={agents} />
     </div>

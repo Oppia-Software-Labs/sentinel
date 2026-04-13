@@ -97,7 +97,7 @@ export function PolicyForm({ initialRules }: Props) {
   }
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-4">
+    <div className="flex max-w-6xl flex-col gap-4">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-stretch">
         <Card className="flex h-full flex-col rounded-2xl border-border shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
           <CardHeader className="pb-4">

@@ -1,13 +1,19 @@
+#!/usr/bin/env node
 /**
- * ShieldPay MCP Server
+ * Sentinel MCP Server  (@oppialabs/sentinel-mcp)
  *
- * Connects Claude Code (or any MCP client) to ShieldPay's governance layer.
+ * Connects Claude Code (or any MCP client) to Sentinel's governance layer.
  * Every payment Claude wants to make goes through:
- *   escrow → agent voting (risk + cost + AI logic) → Soroban → dashboard
+ *   agent voting (risk + cost + AI logic) → Soroban policy → dashboard
+ *
+ * Setup (one command):
+ *   claude mcp add shieldpay -- npx @oppialabs/sentinel-mcp -e SENTINEL_API_KEY=sk_live_...
+ *
+ * Get your API key at: https://app.sentinel.xyz/dashboard/settings
  *
  * Tools exposed:
  *   - request_payment   Submit a payment intent through governance
- *   - get_policy        Read current spend policy so Claude knows its limits
+ *   - get_policy        Read current spend policy
  *   - get_transactions  See recent payment history
  *   - register_agent    Register a custom AI agent for consensus voting
  */
@@ -15,63 +21,62 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
-import { createClient } from '@supabase/supabase-js'
 
-const SHIELDPAY_URL = process.env.SHIELDPAY_API_URL ?? 'http://localhost:4000'
-const OWNER_ID      = process.env.SHIELDPAY_OWNER_ID ?? ''
-const AGENT_ID      = process.env.SHIELDPAY_AGENT_ID ?? 'claude-code'
+const API_URL  = process.env.SENTINEL_API_URL ?? 'https://api.sentinel.xyz'
+const API_KEY  = process.env.SENTINEL_API_KEY ?? ''
+const AGENT_ID = process.env.SENTINEL_AGENT_ID ?? 'claude-code'
 
-// Supabase for reading policy + transactions (optional — graceful if not set)
-const supabase = process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY
-  ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY)
-  : null
+function authHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'x-sentinel-key': API_KEY,
+  }
+}
 
 // ── Server setup ─────────────────────────────────────────────────────────────
 
 const server = new McpServer({
   name: 'shieldpay',
-  version: '0.1.0',
+  version: '0.2.0',
 })
 
 // ── Tool: request_payment ─────────────────────────────────────────────────────
 
 server.tool(
   'request_payment',
-  'Submit a payment request through ShieldPay governance. Agents vote, policy is checked on Soroban, and if approved the payment is executed. Optionally provide a resource_url to a real x402-protected endpoint — ShieldPay will govern the payment and then fetch the paid resource automatically.',
+  'Submit a payment request through Sentinel governance. Agents vote, policy is checked on Soroban, and if approved the payment is executed. Optionally provide a resource_url to a real x402-protected endpoint — Sentinel will govern the payment and then fetch the paid resource automatically.',
   {
     vendor: z.string().describe('The service or API being paid (e.g. "xlm402-com", "openai-api"). If resource_url is provided this can be auto-derived.'),
     amount: z.number().positive().describe('Amount in USDC. If resource_url is provided the exact amount is read from the 402 response.'),
     task_description: z.string().describe('What you are doing and why this payment is needed. The AI governance agent reads this.'),
     asset_code: z.string().default('USDC').describe('Asset code (default: USDC)'),
-    resource_url: z.string().url().optional().describe('Optional: a real x402-protected URL. ShieldPay will probe it for payment requirements, govern the payment, then fetch and return the resource data.'),
+    resource_url: z.string().url().optional().describe('Optional: a real x402-protected URL. Sentinel will probe it for payment requirements, govern the payment, then fetch and return the resource data.'),
     resource_method: z.enum(['GET', 'POST']).default('GET').describe('HTTP method for the resource (default GET)'),
     resource_body: z.record(z.unknown()).optional().describe('Optional JSON body for POST resources'),
   },
   async ({ vendor, amount, task_description, asset_code, resource_url, resource_method, resource_body }) => {
-    if (!OWNER_ID) {
+    if (!API_KEY) {
       return {
         content: [{
           type: 'text',
-          text: 'Error: SHIELDPAY_OWNER_ID is not configured. Add it to the MCP server env.',
+          text: 'Error: SENTINEL_API_KEY is not configured.\n\nGet your key at https://app.sentinel.xyz/dashboard/settings, then run:\n  claude mcp add shieldpay -- npx @oppialabs/sentinel-mcp -e SENTINEL_API_KEY=sk_live_...',
         }],
         isError: true,
       }
     }
 
     try {
-      const res = await fetch(`${SHIELDPAY_URL}/api/proxy/settle`, {
+      const res = await fetch(`${API_URL}/api/proxy/settle`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify({
           intent: {
             agentId: AGENT_ID,
-            ownerId: OWNER_ID,
             vendor,
             amount,
             assetCode: asset_code,
             taskDescription: task_description,
           },
-          ownerId: OWNER_ID,
           resourceUrl: resource_url,
           resourceMethod: resource_method,
           resourceBody: resource_body,
@@ -88,7 +93,7 @@ server.tool(
         return {
           content: [{
             type: 'text',
-            text: `ShieldPay returned HTTP ${res.status}: ${(data as any).error ?? JSON.stringify(data)}${votesSummary}`,
+            text: `Sentinel returned HTTP ${res.status}: ${(data as any).error ?? JSON.stringify(data)}${votesSummary}`,
           }],
           isError: true,
         }
@@ -123,7 +128,7 @@ server.tool(
           content: [{
             type: 'text',
             text: [
-              `✓ Payment approved by ShieldPay governance`,
+              `✓ Payment approved by Sentinel governance`,
               `  vendor       : ${vendor}`,
               `  amount       : ${amount} ${asset_code}`,
               txId          ? `  soroban id   : ${txId}` : '',
@@ -141,7 +146,7 @@ server.tool(
           content: [{
             type: 'text',
             text: [
-              `✗ Payment REJECTED by ShieldPay governance`,
+              `✗ Payment REJECTED by Sentinel governance`,
               `  vendor    : ${vendor}`,
               `  amount    : ${amount} ${asset_code}`,
               `  reason    : ${reason ?? 'no reason provided'}`,
@@ -159,7 +164,7 @@ server.tool(
       return {
         content: [{
           type: 'text',
-          text: `Failed to reach ShieldPay at ${SHIELDPAY_URL}: ${message}\n\nIs ShieldPay running? Start it with: npm run dev:api`,
+          text: `Failed to reach Sentinel at ${API_URL}: ${message}`,
         }],
         isError: true,
       }
@@ -174,44 +179,54 @@ server.tool(
   'Read the current spend policy — daily/hourly limits, per-task cap, blocked vendors. Check this before attempting large payments.',
   {},
   async () => {
-    if (!supabase || !OWNER_ID) {
+    if (!API_KEY) {
+      return {
+        content: [{ type: 'text', text: 'Policy unavailable — SENTINEL_API_KEY not configured.' }],
+      }
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/me/policy`, {
+        headers: authHeaders(),
+      })
+
+      if (!res.ok) {
+        return {
+          content: [{ type: 'text', text: `Failed to fetch policy: HTTP ${res.status}` }],
+          isError: true,
+        }
+      }
+
+      const { policy } = await res.json()
+
+      if (!policy) {
+        return {
+          content: [{ type: 'text', text: 'No policy set — all payments will use default limits.' }],
+        }
+      }
+
+      const toUsdc = (stroops: string | null) =>
+        stroops ? `$${(parseInt(stroops) / 10_000_000).toFixed(2)} USDC` : 'unlimited'
+
       return {
         content: [{
           type: 'text',
-          text: 'Policy unavailable — Supabase not configured or SHIELDPAY_OWNER_ID not set.',
+          text: [
+            'Current spend policy:',
+            `  max per task  : ${toUsdc(policy.max_per_task)}`,
+            `  max per hour  : ${toUsdc(policy.max_per_hour)}`,
+            `  max per day   : ${toUsdc(policy.max_per_day)}`,
+            `  blocked vendors: ${(policy.blocked_vendors as string[] | null)?.join(', ') || 'none'}`,
+            `  alert threshold: ${toUsdc(policy.alert_threshold)}`,
+          ].join('\n'),
         }],
       }
-    }
-
-    const { data, error } = await supabase
-      .from('policies')
-      .select('*')
-      .eq('owner_id', OWNER_ID)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
-
-    if (error || !data) {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
       return {
-        content: [{ type: 'text', text: 'No policy found for this owner.' }],
+        content: [{ type: 'text', text: `Failed to fetch policy: ${message}` }],
+        isError: true,
       }
-    }
-
-    const toUsdc = (stroops: string | null) =>
-      stroops ? `$${(parseInt(stroops) / 10_000_000).toFixed(2)} USDC` : 'unlimited'
-
-    return {
-      content: [{
-        type: 'text',
-        text: [
-          'Current spend policy:',
-          `  max per task  : ${toUsdc(data.max_per_task)}`,
-          `  max per hour  : ${toUsdc(data.max_per_hour)}`,
-          `  max per day   : ${toUsdc(data.max_per_day)}`,
-          `  blocked vendors: ${(data.blocked_vendors as string[] | null)?.join(', ') || 'none'}`,
-          `  alert threshold: ${toUsdc(data.alert_threshold)}`,
-        ].join('\n'),
-      }],
     }
   },
 )
@@ -225,47 +240,51 @@ server.tool(
     limit: z.number().int().min(1).max(50).default(10).describe('Number of recent transactions to return'),
   },
   async ({ limit }) => {
-    if (!supabase || !OWNER_ID) {
+    if (!API_KEY) {
+      return {
+        content: [{ type: 'text', text: 'Transactions unavailable — SENTINEL_API_KEY not configured.' }],
+      }
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/me/transactions?limit=${limit}`, {
+        headers: authHeaders(),
+      })
+
+      if (!res.ok) {
+        return {
+          content: [{ type: 'text', text: `Failed to fetch transactions: HTTP ${res.status}` }],
+          isError: true,
+        }
+      }
+
+      const { transactions } = await res.json()
+
+      if (!transactions || transactions.length === 0) {
+        return {
+          content: [{ type: 'text', text: 'No transactions found.' }],
+        }
+      }
+
+      const rows = (transactions as any[]).map(tx => {
+        const status = tx.status === 'approved' ? '✓' : tx.status === 'rejected' ? '✗' : '⏳'
+        const amount = `$${Number(tx.amount).toFixed(2)} ${tx.asset_code ?? 'USDC'}`
+        const date   = new Date(tx.created_at).toLocaleTimeString()
+        return `  ${status}  [${date}]  ${amount}  →  ${tx.vendor ?? 'unknown'}  (${tx.status})`
+      })
+
       return {
         content: [{
           type: 'text',
-          text: 'Transactions unavailable — Supabase not configured or SHIELDPAY_OWNER_ID not set.',
+          text: `Last ${transactions.length} transactions:\n\n` + rows.join('\n'),
         }],
       }
-    }
-
-    const { data, error } = await supabase
-      .from('transactions')
-      .select('*')
-      .eq('owner_id', OWNER_ID)
-      .order('created_at', { ascending: false })
-      .limit(limit)
-
-    if (error) {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
       return {
-        content: [{ type: 'text', text: `Error fetching transactions: ${error.message}` }],
+        content: [{ type: 'text', text: `Failed to fetch transactions: ${message}` }],
         isError: true,
       }
-    }
-
-    if (!data || data.length === 0) {
-      return {
-        content: [{ type: 'text', text: 'No transactions found.' }],
-      }
-    }
-
-    const rows = (data as any[]).map(tx => {
-      const status = tx.status === 'approved' ? '✓' : tx.status === 'rejected' ? '✗' : '⏳'
-      const amount = `$${Number(tx.amount).toFixed(2)} ${tx.asset_code ?? 'USDC'}`
-      const date   = new Date(tx.created_at).toLocaleTimeString()
-      return `  ${status}  [${date}]  ${amount}  →  ${tx.vendor ?? 'unknown'}  (${tx.status})`
-    })
-
-    return {
-      content: [{
-        type: 'text',
-        text: `Last ${data.length} transactions:\n\n` + rows.join('\n'),
-      }],
     }
   },
 )
@@ -274,7 +293,7 @@ server.tool(
 
 server.tool(
   'register_agent',
-  'Register a custom AI agent that votes on every payment. The agent is powered by an LLM (OpenAI or Anthropic) with your API key and system prompt. ShieldPay hosts it — no server needed.',
+  'Register a custom AI agent that votes on every payment. The agent is powered by an LLM (OpenAI or Anthropic) with your API key and system prompt. Sentinel hosts it — no server needed.',
   {
     agent_id: z.string().describe('Unique agent identifier (lowercase, hyphens allowed). E.g. "compliance-checker"'),
     provider: z.enum(['openai', 'anthropic']).describe('LLM provider to use'),
@@ -284,22 +303,21 @@ server.tool(
     description: z.string().optional().describe('Short description of what this agent does'),
   },
   async ({ agent_id, provider, api_key, model, system_prompt, description }) => {
-    if (!OWNER_ID) {
+    if (!API_KEY) {
       return {
         content: [{
           type: 'text',
-          text: 'Error: SHIELDPAY_OWNER_ID is not configured. Add it to the MCP server env.',
+          text: 'Error: SENTINEL_API_KEY is not configured.',
         }],
         isError: true,
       }
     }
 
     try {
-      const res = await fetch(`${SHIELDPAY_URL}/api/agents`, {
+      const res = await fetch(`${API_URL}/api/agents`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify({
-          ownerId: OWNER_ID,
           agentId: agent_id,
           type: 'hosted',
           provider,
@@ -329,7 +347,7 @@ server.tool(
             `Agent "${agent_id}" registered successfully.`,
             `  provider : ${provider}`,
             `  model    : ${model}`,
-            `  type     : hosted (ShieldPay runs it for you)`,
+            `  type     : hosted (Sentinel runs it for you)`,
             '',
             'The agent will now vote on every payment request.',
           ].join('\n'),
@@ -340,7 +358,7 @@ server.tool(
       return {
         content: [{
           type: 'text',
-          text: `Failed to reach ShieldPay at ${SHIELDPAY_URL}: ${message}\n\nIs ShieldPay running? Start it with: npm run dev:api`,
+          text: `Failed to reach Sentinel at ${API_URL}: ${message}`,
         }],
         isError: true,
       }

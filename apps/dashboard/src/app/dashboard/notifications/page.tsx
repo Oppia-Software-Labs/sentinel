@@ -75,7 +75,7 @@ function ChannelCard({ type, existing, onSaved }: ChannelCardProps) {
 
   const defaultFields: Record<string, string> = isWebhook
     ? { url: '', secret: '' }
-    : { to: '', from: '' }
+    : { to: '' }
 
   const [fields, setFields] = useState<Record<string, string>>(
     existing ? { ...defaultFields, ...existing.config } : defaultFields,
@@ -215,7 +215,7 @@ function ChannelCard({ type, existing, onSaved }: ChannelCardProps) {
             </>
           ) : (
             <>
-              <div className="space-y-1.5">
+              <div className="sm:col-span-2 space-y-1.5">
                 <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
                   Recipient
                 </Label>
@@ -226,16 +226,12 @@ function ChannelCard({ type, existing, onSaved }: ChannelCardProps) {
                   className="font-mono text-xs h-9"
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                  From <span className="normal-case tracking-normal font-normal opacity-60">(optional)</span>
-                </Label>
-                <Input
-                  placeholder="sentinel@yourapp.com"
-                  value={fields.from ?? ''}
-                  onChange={(e) => setFields((f) => ({ ...f, from: e.target.value }))}
-                  className="font-mono text-xs h-9"
-                />
+              <div className="sm:col-span-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5">
+                <p className="text-[11px] text-muted-foreground">
+                  Emails are sent from{' '}
+                  <span className="font-mono font-medium text-zinc-700">noreply@oppialabs.com</span>.
+                  Make sure to check your spam folder if you don't see them.
+                </p>
               </div>
             </>
           )}
@@ -451,51 +447,41 @@ export default function NotificationsPage() {
       </div>
 
       <div className="max-w-6xl space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-base font-semibold tracking-tight">Notifications</h1>
-        <p className="text-xs text-muted-foreground mt-1">
-          Alert channels for governance events — blocked payments, settlements, and kill-switches.
-        </p>
-      </div>
-
-      <div className="border-t border-border" />
-
-      {loading ? (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground py-4">
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          Loading…
-        </div>
-      ) : (
-        <>
-          {/* Channel cards */}
-          <div className="space-y-2">
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
-              Channels
-            </p>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:items-start md:gap-5">
-              <ChannelCard type="webhook" existing={webhookConfig} onSaved={load} />
-              <ChannelCard type="email" existing={emailConfig} onSaved={load} />
-            </div>
+        {loading ? (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground py-4">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            Loading…
           </div>
-
-          <div className="border-t border-border" />
-
-          {/* Delivery log */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
+        ) : (
+          <>
+            {/* Channel cards */}
+            <div className="space-y-2">
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
-                Recent Deliveries
+                Channels
               </p>
-              <span className="flex items-center gap-1.5">
-                <span className="live-dot" />
-                <span className="text-[10px] font-medium text-emerald-800">Live</span>
-              </span>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:items-start md:gap-5">
+                <ChannelCard type="webhook" existing={webhookConfig} onSaved={load} />
+                <ChannelCard type="email" existing={emailConfig} onSaved={load} />
+              </div>
             </div>
-            <DeliveryLog configs={configs} />
-          </div>
-        </>
-      )}
+
+            <div className="border-t border-border" />
+
+            {/* Delivery log */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
+                  Recent Deliveries
+                </p>
+                <span className="flex items-center gap-1.5">
+                  <span className="live-dot" />
+                  <span className="text-[10px] font-medium text-emerald-800">Live</span>
+                </span>
+              </div>
+              <DeliveryLog configs={configs} />
+            </div>
+          </>
+        )}
       </div>
     </div>
   )

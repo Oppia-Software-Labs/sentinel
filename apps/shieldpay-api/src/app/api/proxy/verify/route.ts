@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import axios from 'axios'
 import { verify, loadSorobanConfig } from '@sentinel/sdk'
 import type { PaymentIntent } from '@sentinel/sdk'
+import { validateApiKey, unauthorizedResponse } from '../../../../lib/auth/api-key'
 
 export async function POST(req: NextRequest) {
-  let body: { intent: PaymentIntent; ownerId: string }
+  const ownerId = await validateApiKey(req)
+  if (!ownerId) return unauthorizedResponse()
+
+  let body: { intent: PaymentIntent }
 
   try {
     body = await req.json()
@@ -12,9 +16,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  const { intent, ownerId } = body
-  if (!intent || !ownerId) {
-    return NextResponse.json({ error: 'Missing intent or ownerId' }, { status: 400 })
+  const { intent } = body
+  if (!intent) {
+    return NextResponse.json({ error: 'Missing intent' }, { status: 400 })
   }
 
   // 1. Policy check on Soroban
