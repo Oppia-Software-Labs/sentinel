@@ -8,7 +8,7 @@ export default function HeroMain() {
     <main className="relative flex h-screen w-full flex-col overflow-hidden">
       <div className="absolute inset-0 z-0 bg-[url('/hero/hero.svg')] bg-cover bg-center brightness-93" />
 
-      <div className="pointer-events-none absolute inset-0 z-1 bg-gradient-to-b from-transparent from-35% to-black/45" />
+      <div className="pointer-events-none absolute inset-0 z-1 backdrop-blur-[10px] mask-[linear-gradient(to_bottom,transparent_35%,black_65%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_35%,black_65%)]" />
 
       <motion.div
         className="absolute bottom-0 left-0 right-0 z-10 mb-24 flex w-full items-end justify-between px-7 pb-14 sm:px-10 sm:pb-20"
@@ -25,7 +25,7 @@ export default function HeroMain() {
           </h1>
 
           <p className="mt-4 max-w-lg text-base font-normal leading-relaxed text-white/80 sm:mt-5 sm:text-lg">
-            Approve, enforce, and execute every payment with Sentinel + ShieldPay—using policies,
+            Approve, enforce, and execute every payment with Sentinel + ShieldPay using policies,
             multi-agent validation, and secure escrow to prevent costly mistakes before they happen.
           </p>
 
