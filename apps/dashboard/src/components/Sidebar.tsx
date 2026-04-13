@@ -2,27 +2,35 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard,
   Shield,
   Bot,
   Bell,
-  ChevronRight,
+  Settings,
+  LogOut,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
 
 const NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/dashboard/policies', label: 'Policies', icon: Shield },
   { href: '/dashboard/agents', label: 'Agents', icon: Bot },
   { href: '/dashboard/notifications', label: 'Notifications', icon: Bell },
+  { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ]
-
-const CONTRACT_SHORT = 'CBPWF5…UGDVF'
 
 export function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+
+  async function handleLogout() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
 
   return (
     <aside className="flex h-screen w-70 shrink-0 flex-col border-r border-emerald-900/10 bg-background">
@@ -70,6 +78,17 @@ export function Sidebar() {
           )
         })}
       </nav>
+
+      {/* Logout */}
+      <div className="px-3 pb-6">
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3.5 rounded-full px-4 py-3.5 text-base text-zinc-500 transition-colors hover:bg-zinc-100/90 hover:text-zinc-950"
+        >
+          <LogOut className="h-5 w-5 shrink-0" strokeWidth={1.85} />
+          Log out
+        </button>
+      </div>
     </aside>
   )
 }

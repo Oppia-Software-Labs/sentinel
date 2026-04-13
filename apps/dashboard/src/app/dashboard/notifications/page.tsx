@@ -75,7 +75,7 @@ function ChannelCard({ type, existing, onSaved }: ChannelCardProps) {
 
   const defaultFields: Record<string, string> = isWebhook
     ? { url: '', secret: '' }
-    : { to: '', from: '' }
+    : { to: '' }
 
   const [fields, setFields] = useState<Record<string, string>>(
     existing ? { ...defaultFields, ...existing.config } : defaultFields,
@@ -215,7 +215,7 @@ function ChannelCard({ type, existing, onSaved }: ChannelCardProps) {
             </>
           ) : (
             <>
-              <div className="space-y-1.5">
+              <div className="sm:col-span-2 space-y-1.5">
                 <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
                   Recipient
                 </Label>
@@ -226,16 +226,12 @@ function ChannelCard({ type, existing, onSaved }: ChannelCardProps) {
                   className="font-mono text-xs h-9"
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                  From <span className="normal-case tracking-normal font-normal opacity-60">(optional)</span>
-                </Label>
-                <Input
-                  placeholder="sentinel@yourapp.com"
-                  value={fields.from ?? ''}
-                  onChange={(e) => setFields((f) => ({ ...f, from: e.target.value }))}
-                  className="font-mono text-xs h-9"
-                />
+              <div className="sm:col-span-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2.5">
+                <p className="text-[11px] text-muted-foreground">
+                  Emails are sent from{' '}
+                  <span className="font-mono font-medium text-zinc-700">noreply@oppialabs.com</span>.
+                  Make sure to check your spam folder if you don't see them.
+                </p>
               </div>
             </>
           )}
