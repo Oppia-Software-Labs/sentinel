@@ -37,7 +37,7 @@ export function Sidebar() {
       </div>
 
       {/* Nav */}
-      <nav className="mt-4 flex flex-1 flex-col gap-1 px-3 pt-8">
+      <nav className="flex flex-1 flex-col gap-1 px-3 pt-8">
         {NAV.map(({ href, label, icon: Icon }) => {
           const active = pathname === href
           return (
