@@ -20,17 +20,19 @@ Together they form one stack; either piece can be discussed on its own for integ
 
 ## The problem
 
-Autonomous agents can burn API and on-chain budget in loops, retry storms, or bad deploys. Documented incidents run to **tens of thousands of USD in days**. Sentinel + ShieldPay aim to **block or throttle before settlement**, with alerts (e.g. Slack) and operator controls (e.g. kill-switch) where the product specifies them.
+Autonomous agents can burn API and on-chain budget in loops, retry storms, or bad deploys. Documented incidents run to **tens of thousands of USD in days**. Sentinel + ShieldPay aim to **block or throttle before settlement**, with alerts and operator controls (e.g. kill-switch) where the product specifies them.
 
 ## Features (MVP target)
 
 | Area | Description |
 | --- | --- |
 | **@sentinel/sdk** | Shared types, policy engine, consensus coordinator, agent registry (**no escrow**) |
-| **ShieldPay API** | Trustless Work escrow (fund / release / refund), proxy `/verify` · `/settle` to the hosted facilitator, MPP session hooks |
+| **ShieldPay API** | Trustless Work escrow (fund / release / refund), proxy `/verify` · `/settle` to the hosted facilitator, MPP session hooks, built-in voting agents |
+| **MCP Server** | 4 tools for Claude Code: `request_payment`, `get_policy`, `get_transactions`, `register_agent` |
 | **Dashboard** | Next.js UI, Supabase Realtime for transactions, votes, MPP sessions, policies, agents |
-| **Demo** | Paired scripts: unprotected spend loop vs Sentinel-protected agent |
 | **x402** | x402 v2, `exact` scheme, Stellar testnet/mainnet via hosted facilitator |
+| **Hosted Agents** | LLM-backed consensus agents (OpenAI / Anthropic) with encrypted key storage |
+| **Notifications** | Webhook (HMAC-SHA256) + Email via Resend; 5 event types |
 | **Data** | Supabase: policies, agents, consensus config, transactions, votes, MPP sessions |
 
 ## Quick start
@@ -74,12 +76,14 @@ Optional:
    ```bash
    cp apps/shieldpay-api/.env.example apps/shieldpay-api/.env.local
    cp apps/dashboard/.env.example apps/dashboard/.env.local
+   cp apps/shieldpay-mcp/.env.example apps/shieldpay-mcp/.env.local
    ```
 
    | File | Purpose |
    | --- | --- |
    | `apps/shieldpay-api/.env.local` | Facilitator URL + API key, Trustless Work, Supabase service role, Soroban contract |
    | `apps/dashboard/.env.local` | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` |
+   | `apps/shieldpay-mcp/.env.local` | `SHIELDPAY_API_URL`, `SHIELDPAY_OWNER_ID`, `SHIELDPAY_AGENT_ID`, `SUPABASE_URL`, `SUPABASE_ANON_KEY` |
 
    **Hosted facilitator (testnet)** — set at minimum:
 
@@ -115,12 +119,79 @@ Optional:
    npm run dev:api
    ```
 
-### Demo scripts
+### MCP server setup (Claude Code)
 
-```bash
-npm run loop -w demo        # unprotected loop (stub / wiring TBD)
-npm run protected -w demo   # Sentinel-aware agent (stub / wiring TBD)
-```
+The MCP server exposes ShieldPay to Claude Code as 4 callable tools.
+
+1. **Build and start**
+
+   ```bash
+   # production
+   npm run build -w shieldpay-mcp
+   npm run start -w shieldpay-mcp
+
+   # or development (watch mode)
+   npm run dev -w shieldpay-mcp
+   ```
+
+2. **Required env vars** (in `apps/shieldpay-mcp/.env.local`)
+
+   ```env
+   SHIELDPAY_API_URL=http://localhost:4000
+   SHIELDPAY_OWNER_ID=<your_owner_id>
+   SHIELDPAY_AGENT_ID=<your_agent_id>
+   SUPABASE_URL=<your_supabase_url>
+   SUPABASE_ANON_KEY=<your_supabase_anon_key>
+   ```
+
+3. **Wire into Claude Code** — register with the Claude Code CLI:
+
+   ```bash
+   claude mcp add shieldpay \
+     --scope user \
+     -e SHIELDPAY_API_URL=http://localhost:4000 \
+     -e SHIELDPAY_OWNER_ID=<your_owner_id> \
+     -e SHIELDPAY_AGENT_ID=claude-code \
+     -e SUPABASE_URL=<your_supabase_url> \
+     -e SUPABASE_ANON_KEY=<your_supabase_anon_key> \
+     -- node <absolute_path_to_sentinel>/apps/shieldpay-mcp/dist/index.js
+   ```
+
+   Verify it connected: `claude mcp get shieldpay`
+
+   Available MCP tools: `request_payment`, `get_policy`, `get_transactions`, `register_agent`.
+
+## API endpoints
+
+### ShieldPay API (`apps/shieldpay-api`, port 4000)
+
+| Endpoint | Method | Description |
+| --- | --- | --- |
+| `/api/proxy/verify` | POST | Policy-only check; forwards to OZ Relayer if approved |
+| `/api/proxy/settle` | POST | Full consensus + policy + escrow + x402 settlement. Supports `resourceUrl` for auto-fetch |
+| `/api/agents` | GET | List agents for an owner (`?ownerId=`) |
+| `/api/agents` | POST | Register agent (custom HTTP endpoint or hosted LLM) |
+| `/api/agents` | DELETE | Deactivate an agent |
+| `/api/agents/risk` | POST | Built-in risk agent (retry storm / velocity detection) |
+| `/api/agents/cost` | POST | Built-in cost agent (daily / hourly / per-tx caps) |
+| `/api/agents/logic` | POST | Built-in logic agent (LLM semantic validation via OpenAI) |
+| `/api/agents/hosted` | POST | Invoke a registered hosted LLM agent |
+| `/api/agents/test` | POST | Validate LLM config (API key + sample run) before registration |
+| `/api/mpp` | POST | MPP session lifecycle: `open`, `charge`, `close`, `kill`, `kill_all` |
+| `/api/notifications/dispatch` | POST | Internal notification dispatch (webhook + email) |
+| `/api/openapi` | GET | OpenAPI 3.0 spec |
+
+### Dashboard API (`apps/dashboard`, port 3000)
+
+Browser-side proxies + UI helpers:
+
+| Endpoint | Method | Description |
+| --- | --- | --- |
+| `/api/agents` | POST / DELETE | Proxy to ShieldPay agent routes |
+| `/api/policy` | POST | Mirror policy to Supabase |
+| `/api/kill` | POST | Trigger kill-all MPP sessions |
+| `/api/notifications/config` | GET / POST / DELETE | Manage notification configs |
+| `/api/notifications/test` | POST | Test-dispatch a notification |
 
 ## Repository architecture
 
@@ -131,8 +202,8 @@ npm run protected -w demo   # Sentinel-aware agent (stub / wiring TBD)
 | **On-chain governance** | `contracts/sentinel-governance` | Soroban contract (Rust, `soroban-sdk`): policy, quorum, agent registry, verdicts. **Not** an npm workspace; build and deploy with the Soroban/Stellar toolchain. |
 | **Governance library** | `packages/sentinel-sdk` | Types, `verify` / `evaluate`, `SorobanClient`, policy, consensus, Supabase mirror. Invokes the contract over RPC. **No** Trustless Work, **no** HTTP to the x402 facilitator. |
 | **Payments API** | `apps/shieldpay-api` | HTTP entry from agents. Calls `@sentinel/sdk`, then **escrow** (Trustless Work), **facilitator** (`/verify`, `/settle`), **MPP** routes, built-in voting agents. |
+| **MCP Server** | `apps/shieldpay-mcp` | MCP server for Claude Code. Exposes ShieldPay as 4 tools. |
 | **Dashboard** | `apps/dashboard` | Next.js UI + Supabase Realtime (browser client only). |
-| **Demo** | `apps/demo` | CLI scripts; consumes types / SDK as needed. |
 
 **Dependency rule:** `apps/*` may depend on `packages/sentinel-sdk`. The SDK **must not** depend on `apps/*` or call Trustless Work / facilitator URLs (those stay in ShieldPay API). The contract crate under `contracts/` is independent of npm workspaces.
 
@@ -159,6 +230,9 @@ npm run protected -w demo   # Sentinel-aware agent (stub / wiring TBD)
           ▼                        ▼
    apps/dashboard            Supabase
    (Realtime UI)            (Postgres mirror)
+
+   apps/shieldpay-mcp
+   (MCP tools for Claude Code)
 ```
 
 ## Directory layout
@@ -212,22 +286,27 @@ sentinel/
     │       │       ├── openapi/route.ts     # OpenAPI spec
     │       │       ├── proxy/verify/route.ts
     │       │       ├── proxy/settle/route.ts
-    │       │       ├── agents/route.ts      # register + list agents
+    │       │       ├── agents/route.ts      # register + list + deactivate agents
     │       │       ├── agents/risk/route.ts
     │       │       ├── agents/cost/route.ts
     │       │       ├── agents/logic/route.ts
-    │       │       └── mpp/route.ts
+    │       │       ├── agents/hosted/route.ts
+    │       │       ├── agents/test/route.ts
+    │       │       ├── mpp/route.ts
+    │       │       └── notifications/dispatch/route.ts
     │       └── lib/
     │           ├── escrow/trustless-work.ts # fund / release / refund
     │           ├── mpp/session-manager.ts   # MPP lifecycle + Supabase mirror
     │           └── supabase/server.ts       # service role client
     │
-    ├── dashboard/               # Next.js 15, port 3000
-    │   └── .env.example
+    ├── shieldpay-mcp/           # MCP server for Claude Code
+    │   ├── package.json
+    │   ├── .env.example
+    │   └── src/
+    │       └── index.ts         # 4 MCP tools
     │
-    └── demo/
-        ├── loop-agent.ts
-        └── protected-agent.ts
+    └── dashboard/               # Next.js 15, port 3000
+        └── .env.example
 ```
 
 ## Available scripts
@@ -244,12 +323,13 @@ sentinel/
 | `npm run supabase:stop` | `supabase stop` |
 | `npm run db:migrate` | `supabase db push` |
 
-### Workspace examples
+### MCP server
 
 | Command | Description |
 | --- | --- |
-| `npm run loop -w demo` | Run `demo` package `loop` script |
-| `npm run protected -w demo` | Run `demo` package `protected` script |
+| `npm run build -w shieldpay-mcp` | Compile MCP server |
+| `npm run start -w shieldpay-mcp` | Run compiled MCP server |
+| `npm run dev -w shieldpay-mcp` | Run MCP server in watch mode |
 
 ## Technology stack
 
@@ -271,6 +351,8 @@ sentinel/
 | **Supabase** | Postgres + Realtime for transactions, votes, sessions, policies |
 | **Trustless Work** | Escrow API used **from ShieldPay API** after Sentinel approves (fund / release / refund) |
 | **@stellar/mpp** | MPP flows on Stellar (with compatible `@stellar/stellar-sdk` / `mppx` peers) |
+| **Resend** | Email delivery for notifications |
+| **OpenAI / Anthropic** | Hosted LLM agents (`gpt-4o-mini`, `claude-*` models) for consensus voting |
 
 ### Payments (x402)
 
@@ -303,12 +385,14 @@ Agent  →  HTTP  →  ShieldPay API (proxy)
 
 - **API template:** [`apps/shieldpay-api/.env.example`](./apps/shieldpay-api/.env.example)
 - **Dashboard template:** [`apps/dashboard/.env.example`](./apps/dashboard/.env.example)
+- **MCP template:** [`apps/shieldpay-mcp/.env.example`](./apps/shieldpay-mcp/.env.example)
 - **Facilitator docs:** [Built on Stellar x402](https://developers.stellar.org/docs/build/agentic-payments/x402/built-on-stellar)
 
 Required groups:
 
-1. **ShieldPay API** — facilitator base URL + API key, Trustless Work, Supabase service role, `STELLAR_NETWORK`, optional `SLACK_WEBHOOK_URL`.
+1. **ShieldPay API** — facilitator base URL + API key, Trustless Work, Supabase service role, `STELLAR_NETWORK`, optional notification vars.
 2. **Dashboard** — public Supabase URL and anon key only.
+3. **MCP Server** — `SHIELDPAY_API_URL`, `SHIELDPAY_OWNER_ID`, `SHIELDPAY_AGENT_ID`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`.
 
 ## Documentation for contributors
 

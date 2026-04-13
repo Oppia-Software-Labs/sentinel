@@ -9,6 +9,7 @@
  *   - request_payment   Submit a payment intent through governance
  *   - get_policy        Read current spend policy so Claude knows its limits
  *   - get_transactions  See recent payment history
+ *   - register_agent    Register a custom AI agent for consensus voting
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
@@ -265,6 +266,84 @@ server.tool(
         type: 'text',
         text: `Last ${data.length} transactions:\n\n` + rows.join('\n'),
       }],
+    }
+  },
+)
+
+// ── Tool: register_agent ──────────────────────────────────────────────────────
+
+server.tool(
+  'register_agent',
+  'Register a custom AI agent that votes on every payment. The agent is powered by an LLM (OpenAI or Anthropic) with your API key and system prompt. ShieldPay hosts it — no server needed.',
+  {
+    agent_id: z.string().describe('Unique agent identifier (lowercase, hyphens allowed). E.g. "compliance-checker"'),
+    provider: z.enum(['openai', 'anthropic']).describe('LLM provider to use'),
+    api_key: z.string().describe('Your API key for the provider'),
+    model: z.string().default('gpt-4o-mini').describe('Model to use (e.g. "gpt-4o-mini", "claude-sonnet-4-20250514")'),
+    system_prompt: z.string().describe('Instructions for the agent. E.g. "Reject gaming purchases. Only approve cloud services and dev tools."'),
+    description: z.string().optional().describe('Short description of what this agent does'),
+  },
+  async ({ agent_id, provider, api_key, model, system_prompt, description }) => {
+    if (!OWNER_ID) {
+      return {
+        content: [{
+          type: 'text',
+          text: 'Error: SHIELDPAY_OWNER_ID is not configured. Add it to the MCP server env.',
+        }],
+        isError: true,
+      }
+    }
+
+    try {
+      const res = await fetch(`${SHIELDPAY_URL}/api/agents`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ownerId: OWNER_ID,
+          agentId: agent_id,
+          type: 'hosted',
+          provider,
+          apiKey: api_key,
+          model,
+          systemPrompt: system_prompt,
+          description: description ?? `${provider} ${model} agent`,
+        }),
+      })
+
+      const data = await res.json().catch(() => ({})) as Record<string, unknown>
+
+      if (!res.ok) {
+        return {
+          content: [{
+            type: 'text',
+            text: `Failed to register agent: ${(data as any).error ?? `HTTP ${res.status}`}`,
+          }],
+          isError: true,
+        }
+      }
+
+      return {
+        content: [{
+          type: 'text',
+          text: [
+            `Agent "${agent_id}" registered successfully.`,
+            `  provider : ${provider}`,
+            `  model    : ${model}`,
+            `  type     : hosted (ShieldPay runs it for you)`,
+            '',
+            'The agent will now vote on every payment request.',
+          ].join('\n'),
+        }],
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      return {
+        content: [{
+          type: 'text',
+          text: `Failed to reach ShieldPay at ${SHIELDPAY_URL}: ${message}\n\nIs ShieldPay running? Start it with: npm run dev:api`,
+        }],
+        isError: true,
+      }
     }
   },
 )

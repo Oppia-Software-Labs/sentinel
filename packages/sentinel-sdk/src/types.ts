@@ -25,10 +25,19 @@ export interface EvaluationResult {
 
 export interface RegisteredAgent {
   agentId: string
-  type: 'shieldpay' | 'custom'
+  type: 'shieldpay' | 'custom' | 'hosted'
   endpoint?: string
   description?: string
   isActive: boolean
+}
+
+export interface HostedAgentConfig {
+  agentId: string
+  ownerId: string
+  provider: 'openai' | 'anthropic'
+  model: string
+  systemPrompt: string
+  temperature?: number
 }
 
 export interface ConsensusConfig {
