@@ -83,19 +83,60 @@ export async function closeSession(sessionId: string): Promise<void> {
 }
 
 export async function killSession(sessionId: string, reason: string): Promise<void> {
+  const now = new Date().toISOString()
   const session = sessions.get(sessionId)
-  if (!session) throw new Error(`Session not found: ${sessionId}`)
 
-  session.status = 'killed'
-  session.killReason = reason
-  session.closedAt = new Date().toISOString()
-  await mirrorSession(session)
-  sessions.delete(sessionId)
+  if (session) {
+    session.status = 'killed'
+    session.killReason = reason
+    session.closedAt = now
+    await mirrorSession(session)
+    sessions.delete(sessionId)
+    return
+  }
+
+  // Session not in memory — fall back to Supabase (e.g. after server restart)
+  const supabase = createServiceRoleClient()
+  const { error } = await supabase
+    .from('mpp_sessions')
+    .update({
+      status: 'killed',
+      kill_reason: reason,
+      closed_at: now,
+      updated_at: now,
+    })
+    .eq('session_id', sessionId)
+    .eq('status', 'active')
+
+  if (error) throw new Error(`Failed to kill session ${sessionId} in Supabase: ${error.message}`)
 }
 
 export async function killAllSessions(ownerId?: string): Promise<void> {
-  const toKill = [...sessions.values()].filter(
-    (s) => s.status === 'active' && (!ownerId || s.ownerId === ownerId),
-  )
-  await Promise.all(toKill.map((s) => killSession(s.sessionId, 'Kill-switch activated')))
+  const now = new Date().toISOString()
+  const supabase = createServiceRoleClient()
+
+  // Build query targeting all active sessions in Supabase (source of truth)
+  let query = supabase
+    .from('mpp_sessions')
+    .update({
+      status: 'killed',
+      kill_reason: 'Kill-switch activated',
+      closed_at: now,
+      updated_at: now,
+    })
+    .eq('status', 'active')
+
+  if (ownerId) {
+    query = query.eq('owner_id', ownerId)
+  }
+
+  const { error } = await query
+  if (error) throw new Error(`Failed to kill all sessions in Supabase: ${error.message}`)
+
+  // Purge matching sessions from the in-process Map for consistency
+  for (const [id, s] of sessions) {
+    if (s.status === 'active' && (!ownerId || s.ownerId === ownerId)) {
+      sessions.delete(id)
+    }
+  }
 }
