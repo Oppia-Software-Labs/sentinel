@@ -1,6 +1,6 @@
 {
   "name": "@sentinel/sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "TypeScript SDK for Sentinel / ShieldPay: Soroban policy checks, multi-agent consensus, and Supabase mirroring for payment intents.",
   "private": false,
   "type": "module",
