@@ -2,11 +2,11 @@
  * POST /api/me/setup-account
  *
  * Called once per new user (from the dashboard profile route via service key).
- * Does four things:
+ * Does five things:
  *   1. Sends 100 USDC from the platform operator to the new user (Horizon)
  *   2. Registers the three default ShieldPay agents on Soroban for this owner
- *   3. Seeds a default spending policy in Supabase
- *   4. Sets majority-quorum consensus config on Soroban for this owner
+ *   3. Sets a default spending policy on Soroban and mirrors it to Supabase
+ *   4. Sets majority-quorum consensus config on Soroban and mirrors it to Supabase
  *
  * All steps are non-fatal individually — partial success is returned with an
  * `errors` array so the onboarding flow can continue.
@@ -14,7 +14,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import * as StellarSdk from '@stellar/stellar-sdk'
-import { registerAgent, loadSorobanConfig, createSorobanClient, mirrorAgent, mirrorPolicy } from '@sentinel/sdk'
+import { registerAgent, loadSorobanConfig, createSorobanClient, mirrorAgent, mirrorPolicy, mirrorConsensus } from '@sentinel/sdk'
 import { createServiceRoleClient } from '../../../../lib/supabase/server'
 import { validateApiKey, unauthorizedResponse } from '../../../../lib/auth/api-key'
 
@@ -111,7 +111,17 @@ export async function POST(req: NextRequest) {
       }).catch(() => {})
     }
 
-    // Seed default policy (idempotent — upserts on owner_id)
+    // Set policy on Soroban so on-chain enforcement matches the mirrored defaults
+    const defaultPolicy = {
+      maxPerTask:     50  * 10_000_000,
+      maxPerHour:     100 * 10_000_000,
+      maxPerDay:      500 * 10_000_000,
+      blockedVendors: [] as string[],
+      alertThreshold: 10  * 10_000_000,
+    }
+    await client.setPolicy(ownerId, defaultPolicy)
+
+    // Mirror policy to Supabase (idempotent — upserts on owner_id)
     await mirrorPolicy(supabase, ownerId, {
       max_per_task:    50,
       max_per_hour:    100,
@@ -120,58 +130,16 @@ export async function POST(req: NextRequest) {
       alert_threshold: 10,
     }).catch(() => {})
 
-    // Set consensus: majority quorum, all 3 agents, 5s timeout
-    const { rpcUrl, networkPassphrase, contractId, operatorSecret } = soroban
-    if (contractId && operatorSecret) {
-      const keypair   = StellarSdk.Keypair.fromSecret(operatorSecret)
-      const rpcServer = new StellarSdk.rpc.Server(rpcUrl)
-      const contract  = new StellarSdk.Contract(contractId)
-
-      const configScVal = StellarSdk.xdr.ScVal.scvMap([
-        new StellarSdk.xdr.ScMapEntry({
-          key: StellarSdk.xdr.ScVal.scvSymbol('agent_ids'),
-          val: StellarSdk.xdr.ScVal.scvVec(
-            ['risk', 'cost', 'logic'].map(id => StellarSdk.xdr.ScVal.scvSymbol(id)),
-          ),
-        }),
-        new StellarSdk.xdr.ScMapEntry({
-          key: StellarSdk.xdr.ScVal.scvSymbol('quorum'),
-          val: StellarSdk.xdr.ScVal.scvSymbol('majority'),
-        }),
-        new StellarSdk.xdr.ScMapEntry({
-          key: StellarSdk.xdr.ScVal.scvSymbol('timeout_ms'),
-          val: StellarSdk.nativeToScVal(5000, { type: 'u32' }),
-        }),
-      ])
-
-      const account = await rpcServer.getAccount(keypair.publicKey())
-      const tx = new StellarSdk.TransactionBuilder(account, {
-        fee: '1000000',
-        networkPassphrase,
-      })
-        .addOperation(
-          contract.call(
-            'set_consensus',
-            new StellarSdk.Address(ownerId).toScVal(),
-            configScVal,
-          ),
-        )
-        .setTimeout(30)
-        .build()
-
-      const prepared = await rpcServer.prepareTransaction(tx)
-      prepared.sign(keypair)
-      const sent = await rpcServer.sendTransaction(prepared)
-
-      if (sent.status !== 'ERROR') {
-        // Wait for confirmation (up to 15s)
-        let txResult = await rpcServer.getTransaction(sent.hash)
-        for (let i = 0; i < 15 && txResult.status === StellarSdk.rpc.Api.GetTransactionStatus.NOT_FOUND; i++) {
-          await new Promise(r => setTimeout(r, 1000))
-          txResult = await rpcServer.getTransaction(sent.hash)
-        }
-      }
+    // Set consensus on Soroban: majority quorum, all 3 agents, 5s timeout
+    const consensusConfig = {
+      quorum: 'majority' as const,
+      timeoutMs: 5000,
+      agentIds: ['risk', 'cost', 'logic'],
     }
+    await client.setConsensus(ownerId, consensusConfig)
+
+    // Mirror consensus config to Supabase
+    await mirrorConsensus(supabase, ownerId, consensusConfig).catch(() => {})
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     errors.push(`Soroban setup: ${msg}`)
