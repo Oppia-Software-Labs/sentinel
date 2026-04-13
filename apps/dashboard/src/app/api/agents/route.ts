@@ -1,17 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase/server'
 
 const SHIELDPAY_URL = () => process.env.SHIELDPAY_API_URL ?? 'http://localhost:4000'
-const OWNER_ID = () => process.env.NEXT_PUBLIC_OWNER_ID
+const SERVICE_KEY = () => process.env.SENTINEL_SERVICE_KEY ?? ''
+
+async function getOwnerId(): Promise<string | null> {
+  try {
+    const supabase = await createServerSupabaseClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+
+    const service = createServiceRoleClient()
+    const { data } = await service
+      .from('user_profiles')
+      .select('owner_id')
+      .eq('id', user.id)
+      .single()
+
+    return data?.owner_id ?? null
+  } catch {
+    return null
+  }
+}
 
 /**
  * Proxy for agent registration / deletion.
  * The browser can't call ShieldPay (port 4000) directly due to CORS.
- * This route forwards the request and injects ownerId from the server env.
+ * Injects ownerId from the authenticated session.
  */
 export async function POST(req: NextRequest) {
-  const ownerId = OWNER_ID()
+  const ownerId = await getOwnerId()
   if (!ownerId) {
-    return NextResponse.json({ error: 'NEXT_PUBLIC_OWNER_ID not set' }, { status: 500 })
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
   let body: Record<string, unknown>
@@ -24,7 +44,11 @@ export async function POST(req: NextRequest) {
   try {
     const res = await fetch(`${SHIELDPAY_URL()}/api/agents`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-sentinel-key': SERVICE_KEY(),
+        'x-sentinel-owner-id': ownerId,
+      },
       body: JSON.stringify({ ...body, ownerId }),
     })
 
@@ -32,16 +56,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(data, { status: res.status })
   } catch {
     return NextResponse.json(
-      { error: 'ShieldPay API unreachable — is it running on port 4000?' },
+      { error: 'ShieldPay API unreachable — is it running?' },
       { status: 502 },
     )
   }
 }
 
 export async function DELETE(req: NextRequest) {
-  const ownerId = OWNER_ID()
+  const ownerId = await getOwnerId()
   if (!ownerId) {
-    return NextResponse.json({ error: 'NEXT_PUBLIC_OWNER_ID not set' }, { status: 500 })
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
   let body: Record<string, unknown>
@@ -54,7 +78,11 @@ export async function DELETE(req: NextRequest) {
   try {
     const res = await fetch(`${SHIELDPAY_URL()}/api/agents`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-sentinel-key': SERVICE_KEY(),
+        'x-sentinel-owner-id': ownerId,
+      },
       body: JSON.stringify({ ...body, ownerId }),
     })
 
@@ -62,7 +90,7 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json(data, { status: res.status })
   } catch {
     return NextResponse.json(
-      { error: 'ShieldPay API unreachable — is it running on port 4000?' },
+      { error: 'ShieldPay API unreachable — is it running?' },
       { status: 502 },
     )
   }

@@ -1,23 +1,25 @@
+import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { getSessionUser } from '@/lib/supabase/session'
 import { AgentsList } from '@/components/AgentsList'
 import type { RegisteredAgent } from '@/types'
 
 export default async function AgentsPage() {
+  const session = await getSessionUser()
+  if (!session) redirect('/onboarding')
+
+  const { ownerId } = session
   let agents: RegisteredAgent[] = []
 
   try {
     const supabase = await createServerSupabaseClient()
-    const ownerId  = process.env.NEXT_PUBLIC_OWNER_ID
+    const { data } = await supabase
+      .from('registered_agents')
+      .select('*')
+      .eq('owner_id', ownerId)
+      .order('created_at', { ascending: false })
 
-    if (ownerId) {
-      const { data } = await supabase
-        .from('registered_agents')
-        .select('*')
-        .eq('owner_id', ownerId)
-        .order('created_at', { ascending: false })
-
-      agents = (data ?? []) as RegisteredAgent[]
-    }
+    agents = (data ?? []) as RegisteredAgent[]
   } catch {
     // Supabase not configured — render empty state
   }

@@ -1,22 +1,24 @@
+import { redirect } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { getSessionUser } from '@/lib/supabase/session'
 import { PolicyForm } from '@/components/PolicyForm'
 
 export default async function PoliciesPage() {
+  const session = await getSessionUser()
+  if (!session) redirect('/onboarding')
+
+  const { ownerId } = session
   let rules: Record<string, unknown> | null = null
 
   try {
     const supabase = await createServerSupabaseClient()
-    const ownerId = process.env.NEXT_PUBLIC_OWNER_ID
+    const { data } = await supabase
+      .from('policies')
+      .select('rules')
+      .eq('owner_id', ownerId)
+      .maybeSingle()
 
-    if (ownerId) {
-      const { data } = await supabase
-        .from('policies')
-        .select('rules')
-        .eq('owner_id', ownerId)
-        .maybeSingle()
-
-      rules = (data?.rules as Record<string, unknown>) ?? null
-    }
+    rules = (data?.rules as Record<string, unknown>) ?? null
   } catch {
     // Supabase not configured — render empty form
   }
