@@ -436,7 +436,7 @@ export default function NotificationsPage() {
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
-            backgroundImage: "url('/hero/hero.svg')",
+            backgroundImage: "url('/hero/hero2.jpeg')",
             filter: 'brightness(0.8)',
           }}
         />
