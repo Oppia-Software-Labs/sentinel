@@ -19,6 +19,7 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import * as StellarSdk from '@stellar/stellar-sdk'
+import { createClient } from '@supabase/supabase-js'
 
 // ── Load .env ────────────────────────────────────────────────────────────────
 
@@ -42,10 +43,12 @@ function loadEnv(filePath: string): Record<string, string> {
 
 const env = loadEnv(envPath)
 
-const RPC_URL       = env.STELLAR_RPC_URL            ?? 'https://soroban-testnet.stellar.org'
-const PASSPHRASE    = env.STELLAR_NETWORK_PASSPHRASE  ?? 'Test SDF Network ; September 2015'
-const CONTRACT_ID   = env.SENTINEL_CONTRACT_ID        ?? ''
-const OP_SECRET     = env.SENTINEL_OPERATOR_SECRET    ?? ''
+const RPC_URL        = process.env.STELLAR_RPC_URL            ?? env.STELLAR_RPC_URL            ?? 'https://soroban-testnet.stellar.org'
+const PASSPHRASE     = process.env.STELLAR_NETWORK_PASSPHRASE  ?? env.STELLAR_NETWORK_PASSPHRASE  ?? 'Test SDF Network ; September 2015'
+const CONTRACT_ID    = process.env.SENTINEL_CONTRACT_ID        ?? env.SENTINEL_CONTRACT_ID        ?? ''
+const OP_SECRET      = process.env.SENTINEL_OPERATOR_SECRET    ?? env.SENTINEL_OPERATOR_SECRET    ?? ''
+const SUPABASE_URL   = process.env.SUPABASE_URL               ?? env.SUPABASE_URL               ?? ''
+const SUPABASE_KEY   = process.env.SUPABASE_SERVICE_ROLE_KEY  ?? env.SUPABASE_SERVICE_ROLE_KEY  ?? ''
 const API_BASE      = 'http://localhost:4000'
 
 if (!CONTRACT_ID) throw new Error('SENTINEL_CONTRACT_ID is not set in apps/shieldpay-api/.env')
@@ -218,6 +221,54 @@ try {
     await registerAgent(id, endpoint, description)
   }
   await setConsensus()
+
+  // ── Mirror to Supabase ───────────────────────────────────────────────────────
+  if (SUPABASE_URL && SUPABASE_KEY) {
+    console.log()
+    console.log('Mirroring to Supabase...')
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+
+    // Policy
+    const { error: policyErr } = await supabase
+      .from('policies')
+      .upsert(
+        {
+          owner_id: ownerAddress,
+          rules: {
+            max_per_task: 1_000_000_000,
+            max_per_hour: 1_000_000_000,
+            max_per_day: 1_000_000_000,
+            blocked_vendors: [],
+            alert_threshold: 1_000_000_000,
+          },
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'owner_id' },
+      )
+    if (policyErr) console.warn('  ⚠ policy mirror failed:', policyErr.message)
+    else console.log('  ✓ policy mirrored')
+
+    // Agents
+    for (const { id, endpoint, description } of AGENTS) {
+      const { error: agentErr } = await supabase
+        .from('registered_agents')
+        .upsert(
+          {
+            owner_id: ownerAddress,
+            agent_id: id,
+            type: 'shieldpay',
+            endpoint,
+            description,
+            is_active: true,
+          },
+          { onConflict: 'owner_id,agent_id' },
+        )
+      if (agentErr) console.warn(`  ⚠ agent "${id}" mirror failed:`, agentErr.message)
+      else console.log(`  ✓ agent "${id}" mirrored`)
+    }
+  } else {
+    console.warn('\n⚠ SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set — skipping Supabase mirror')
+  }
 
   console.log()
   console.log('All done. On-chain state initialized for', ownerAddress)
