@@ -1,9 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { mirrorPolicy } from '@sentinel/sdk'
-
-// 1 USDC = 10,000,000 units (Stellar asset precision = 7 decimal places)
-const STROOPS_PER_USDC = 10_000_000
 
 interface PolicyBody {
   max_per_task: number
@@ -14,12 +9,12 @@ interface PolicyBody {
 }
 
 export async function POST(req: NextRequest) {
-  const ownerId = process.env.NEXT_PUBLIC_OWNER_ID
-  if (!ownerId) {
-    return NextResponse.json({ error: 'NEXT_PUBLIC_OWNER_ID not set' }, { status: 500 })
-  }
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY || !process.env.NEXT_PUBLIC_SUPABASE_URL) {
-    return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 })
+  const apiUrl     = process.env.SHIELDPAY_API_URL ?? 'http://localhost:4000'
+  const serviceKey = process.env.SENTINEL_SERVICE_KEY ?? ''
+  const ownerId    = process.env.NEXT_PUBLIC_OWNER_ID ?? ''
+
+  if (!serviceKey || !ownerId) {
+    return NextResponse.json({ error: 'SENTINEL_SERVICE_KEY or NEXT_PUBLIC_OWNER_ID not set' }, { status: 500 })
   }
 
   let body: PolicyBody
@@ -29,22 +24,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  // Convert USDC → contract units (stroops) — same representation as the on-chain policy
-  const rules = {
-    max_per_task:    String(Math.round(body.max_per_task    * STROOPS_PER_USDC)),
-    max_per_hour:    String(Math.round(body.max_per_hour    * STROOPS_PER_USDC)),
-    max_per_day:     String(Math.round(body.max_per_day     * STROOPS_PER_USDC)),
-    alert_threshold: String(Math.round(body.alert_threshold * STROOPS_PER_USDC)),
-    blocked_vendors: body.blocked_vendors,
-  }
-
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY,
-  )
-
   try {
-    await mirrorPolicy(supabase, ownerId, rules)
+    const res = await fetch(`${apiUrl}/api/me/policy`, {
+      method:  'POST',
+      headers: {
+        'Content-Type':        'application/json',
+        'x-sentinel-key':      serviceKey,
+        'x-sentinel-owner-id': ownerId,
+      },
+      body: JSON.stringify(body),
+    })
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      return NextResponse.json(
+        { error: data.error ?? `shieldpay-api responded ${res.status}` },
+        { status: res.status },
+      )
+    }
+
     return NextResponse.json({ ok: true })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
