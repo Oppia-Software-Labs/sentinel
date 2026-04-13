@@ -37,25 +37,40 @@ export async function POST(req: NextRequest) {
 
     const operatorKeypair = StellarSdk.Keypair.fromSecret(operatorSecret)
     const horizon         = new StellarSdk.Horizon.Server(horizonUrl)
-    const operatorAccount = await horizon.loadAccount(operatorKeypair.publicKey())
     const USDC            = new StellarSdk.Asset('USDC', USDC_ISSUER)
 
-    const tx = new StellarSdk.TransactionBuilder(operatorAccount, {
-      fee: StellarSdk.BASE_FEE,
-      networkPassphrase,
-    })
-      .addOperation(
-        StellarSdk.Operation.payment({
-          destination: ownerId,
-          asset: USDC,
-          amount: USDC_AMOUNT,
-        }),
-      )
-      .setTimeout(30)
-      .build()
+    let attempts = 0
+    while (attempts < 3) {
+      try {
+        const operatorAccount = await horizon.loadAccount(operatorKeypair.publicKey())
 
-    tx.sign(operatorKeypair)
-    await horizon.submitTransaction(tx)
+        const tx = new StellarSdk.TransactionBuilder(operatorAccount, {
+          fee: StellarSdk.BASE_FEE,
+          networkPassphrase,
+        })
+          .addOperation(
+            StellarSdk.Operation.payment({
+              destination: ownerId,
+              asset: USDC,
+              amount: USDC_AMOUNT,
+            }),
+          )
+          .setTimeout(30)
+          .build()
+
+        tx.sign(operatorKeypair)
+        await horizon.submitTransaction(tx)
+        break
+      } catch (err) {
+        attempts++
+        const msg = JSON.stringify(err)
+        if (attempts < 3 && (msg.includes('tx_bad_seq') || msg.includes('bad_seq'))) {
+          await new Promise(r => setTimeout(r, 500 * attempts))
+          continue
+        }
+        throw err
+      }
+    }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     errors.push(`USDC funding: ${msg}`)
